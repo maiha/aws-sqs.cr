@@ -1,0 +1,17 @@
+name: aws-sqs
+version: 0.3.0
+
+dependencies:
+  awscr-signer:
+    github: taylorfinnell/awscr-signer
+
+development_dependencies:
+  webmock:
+    github: manastech/webmock.cr
+
+authors:
+  - maiha <maiha@wota.jp>
+
+crystal: 0.35.1
+
+license: MIT

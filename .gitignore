@@ -1,0 +1,8 @@
+/doc/
+/lib/
+/bin/
+/tmp/
+/shard.lock
+/.crystal-version
+/.crystal
+/gen/aws-sdk-go
