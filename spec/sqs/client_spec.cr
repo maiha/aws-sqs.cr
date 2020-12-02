@@ -52,6 +52,16 @@ module Aws
         end
       end
 
+      it "receive_message(queue_url)" do
+        expect_http_request(
+          :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},
+          body: "Action=ReceiveMessage&Version=2012-11-05&QueueUrl=https%3A%2F%2Fsqs.us-east-2.amazonaws.com%2F123456789012%2FMyQueue",
+        ) do
+          client = Client.new("us-east-2", "key", "secret")
+          client.receive_message(queue_url: queue_url)
+        end
+      end
+
       it "send_message(queue_url, message_body)" do
         expect_http_request(
           :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},

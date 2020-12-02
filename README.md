@@ -24,9 +24,8 @@ client = Aws::SQS::Client.new("us-east-2", "key", "secret")
 client.list_queues
 client.get_queue_attributes(queue_url: queue_url, attribute_names: ["QueueArn", "ApproximateNumberOfMessages"])
 client.send_message(queue_url: queue_url, message_body: "message")
-
-# FIFO
 client.send_message(queue_url: queue_url, message_body: "message", message_group_id: "g1", message_deduplication_id: "d1")
+client.receive_message(queue_url: queue_url)
 ```
 
 ## Samples
@@ -36,9 +35,10 @@ $ export AWS_DEFAULT_REGION=us-east-2
 $ export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXXXX
 $ export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-$ crystal samples/list_queues
-$ crystal samples/send_message.cr "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue" "hello"
-$ crystal samples/get_queue_attributes "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue"
+$ crystal samples/list_queues.cr
+$ crystal samples/get_queue_attributes.cr "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue"
+$ crystal samples/send_message.cr         "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue" "hello"
+$ crystal samples/receive_message.cr      "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue"
 ```
 
 ## API
@@ -56,7 +56,7 @@ $ crystal samples/get_queue_attributes "https://sqs.us-east-2.amazonaws.com/1234
 * [ ] list_queue_tags
 * [x] list_queues
 * [ ] purge_queue
-* [ ] receive_message
+* [x] receive_message
 * [ ] remove_permission
 * [x] send_message
 * [ ] send_message_batch
