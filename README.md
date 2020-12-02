@@ -26,6 +26,16 @@ client.send_message(queue_url: queue_url, message_body: "message")
 client.send_message(queue_url: queue_url, message_body: "message", message_group_id: "g1", message_deduplication_id: "d1")
 ```
 
+## Samples
+
+```console
+$ export AWS_DEFAULT_REGION=us-east-2
+$ export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXXXX
+$ export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+$ crystal samples/send_message.cr "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue" "hello"
+```
+
 ## API
 
 * [ ] add_permission
