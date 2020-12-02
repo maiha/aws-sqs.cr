@@ -11,6 +11,16 @@ module Aws
         Client.new("adasd", "adasd", "adad", signer: :v2)
       end
 
+      it "delete_message(queue_url, receipt_handle)" do
+        expect_http_request(
+          :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},
+          body: "Action=DeleteMessage&Version=2012-11-05&QueueUrl=https%3A%2F%2Fsqs.us-east-2.amazonaws.com%2F123456789012%2FMyQueue&ReceiptHandle=foo",
+        ) do
+          client = Client.new("us-east-2", "key", "secret")
+          client.delete_message(queue_url: queue_url, receipt_handle: "foo")
+        end
+      end
+
       it "get_queue_attributes(queue_url)" do
         expect_http_request(
           :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},

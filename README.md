@@ -26,6 +26,7 @@ client.get_queue_attributes(queue_url: queue_url, attribute_names: ["QueueArn", 
 client.send_message(queue_url: queue_url, message_body: "message")
 client.send_message(queue_url: queue_url, message_body: "message", message_group_id: "g1", message_deduplication_id: "d1")
 client.receive_message(queue_url: queue_url)
+client.delete_message(queue_url: queue_url, receipt_handle: "MbZj6wDWli...")
 ```
 
 ## Samples
@@ -39,6 +40,7 @@ $ crystal samples/list_queues.cr
 $ crystal samples/get_queue_attributes.cr "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue"
 $ crystal samples/send_message.cr         "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue" "hello"
 $ crystal samples/receive_message.cr      "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue"
+$ crystal samples/delete_message.cr       "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue" "MbZj6wDWli..."
 ```
 
 ## API
@@ -47,7 +49,7 @@ $ crystal samples/receive_message.cr      "https://sqs.us-east-2.amazonaws.com/1
 * [ ] change_message_visibility
 * [ ] change_message_visibility_batch
 * [ ] create_queue
-* [ ] delete_message
+* [x] delete_message
 * [ ] delete_message_batch
 * [ ] delete_queue
 * [x] get_queue_attributes
