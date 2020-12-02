@@ -20,6 +20,8 @@ dependencies:
 require "aws-sqs"
 
 client = Aws::SQS::Client.new("us-east-2", "key", "secret")
+
+client.list_queues
 client.send_message(queue_url: queue_url, message_body: "message")
 
 # FIFO
@@ -49,7 +51,7 @@ $ crystal samples/send_message.cr "https://sqs.us-east-2.amazonaws.com/123456789
 * [ ] get_queue_url
 * [ ] list_dead_letter_source_queues
 * [ ] list_queue_tags
-* [ ] list_queues
+* [x] list_queues
 * [ ] purge_queue
 * [ ] receive_message
 * [ ] remove_permission

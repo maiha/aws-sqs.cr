@@ -11,6 +11,26 @@ module Aws
         Client.new("adasd", "adasd", "adad", signer: :v2)
       end
 
+      it "list_queues" do
+        expect_http_request(
+          :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},
+          body: "Action=ListQueues&Version=2012-11-05"
+        ) do
+          client = Client.new("us-east-2", "key", "secret")
+          client.list_queues
+        end
+      end
+
+      it "list_queues(queue_name_prefix)" do
+        expect_http_request(
+          :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},
+          body: "Action=ListQueues&Version=2012-11-05&QueueNamePrefix=foo",
+        ) do
+          client = Client.new("us-east-2", "key", "secret")
+          client.list_queues(queue_name_prefix: "foo")
+        end
+      end
+
       it "send_message(queue_url, message_body)" do
         expect_http_request(
           :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},
