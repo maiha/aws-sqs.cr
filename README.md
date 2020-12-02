@@ -22,6 +22,7 @@ require "aws-sqs"
 client = Aws::SQS::Client.new("us-east-2", "key", "secret")
 
 client.list_queues
+client.get_queue_attributes(queue_url: queue_url, attribute_names: ["QueueArn", "ApproximateNumberOfMessages"])
 client.send_message(queue_url: queue_url, message_body: "message")
 
 # FIFO
@@ -35,7 +36,9 @@ $ export AWS_DEFAULT_REGION=us-east-2
 $ export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXXXX
 $ export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+$ crystal samples/list_queues
 $ crystal samples/send_message.cr "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue" "hello"
+$ crystal samples/get_queue_attributes "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue"
 ```
 
 ## API
@@ -47,7 +50,7 @@ $ crystal samples/send_message.cr "https://sqs.us-east-2.amazonaws.com/123456789
 * [ ] delete_message
 * [ ] delete_message_batch
 * [ ] delete_queue
-* [ ] get_queue_attributes
+* [x] get_queue_attributes
 * [ ] get_queue_url
 * [ ] list_dead_letter_source_queues
 * [ ] list_queue_tags

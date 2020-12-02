@@ -11,6 +11,27 @@ module Aws
         Client.new("adasd", "adasd", "adad", signer: :v2)
       end
 
+      it "get_queue_attributes(queue_url)" do
+        expect_http_request(
+          :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},
+          body: "Action=GetQueueAttributes&Version=2012-11-05&QueueUrl=https%3A%2F%2Fsqs.us-east-2.amazonaws.com%2F123456789012%2FMyQueue"
+        ) do
+          client = Client.new("us-east-2", "key", "secret")
+          client.get_queue_attributes(queue_url: queue_url)
+        end
+      end
+
+      it "get_queue_attributes(queue_url, attribute_names)" do
+        expect_http_request(
+          :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},
+          body: "Action=GetQueueAttributes&Version=2012-11-05&QueueUrl=https%3A%2F%2Fsqs.us-east-2.amazonaws.com%2F123456789012%2FMyQueue&AttributeName.1=QueueArn&AttributeName.2=ApproximateNumberOfMessages"
+        ) do
+          client = Client.new("us-east-2", "key", "secret")
+          attribute_names = AttributeNameList.new([QueueAttributeName::QueueArn, QueueAttributeName::ApproximateNumberOfMessages])
+          client.get_queue_attributes(queue_url: queue_url, attribute_names: attribute_names)
+        end
+      end
+
       it "list_queues" do
         expect_http_request(
           :post, "http://sqs.us-east-2.amazonaws.com/", headers: {"Content-Type" => "application/x-www-form-urlencoded"},

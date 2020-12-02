@@ -11,7 +11,7 @@ module Aws
         params["Action"]  = action
         params["Version"] = version
 
-        input.fill(params, serializer: self)
+        set_params(params, serializer: self, value: input)
 
         return params
       end
@@ -46,9 +46,21 @@ module Aws
       
       ######################################################################
       ### Serialize request
-      
-      def serialize(val)
-        val.to_s
+
+      def set_params(params : HTTP::Params, serializer : Execute, value : Types::InputList)
+        value.set_params(params, serializer)
+      end
+
+      def set_params(params : HTTP::Params, serializer : Execute, value : Types::Input)
+        value.set_params(params, serializer)
+      end
+
+      def set_params(params : HTTP::Params, serializer : Execute, name : String, value : Types::InputList)
+        value.set_params(params, serializer)
+      end
+
+      def set_params(params : HTTP::Params, serializer : Execute, name : String, value)
+        params[name] = value.to_s
       end
     end
   end

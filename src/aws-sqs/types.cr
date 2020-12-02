@@ -3,30 +3,66 @@
 
 module Aws::SQS::Types
   module Input
-    abstract def fill(params : HTTP::Params, serializer)
+    abstract def set_params(params : HTTP::Params, serializer)
   end
 
-  record AWSAccountIdList
+  module InputList
+  end
 
-  record ActionNameList
+  record AWSAccountIdList,
+    list : Array(String) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "AWSAccountId.#{i+1}", value: v)
+      end}
+    end
+  end
+
+  record ActionNameList,
+    list : Array(String) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "ActionName.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record AddPermissionRequest,
     queue_url       : String,
     label           : String,
     aws_account_ids : AWSAccountIdList,
-    actions         : ActionNameList do
+    actions         : ActionNameList  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["Label"] = serializer.serialize(label) if !label.nil?
-      params["AWSAccountIds"] = serializer.serialize(aws_account_ids) if !aws_account_ids.nil?
-      params["Actions"] = serializer.serialize(actions) if !actions.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "Label", value: label) if !label.nil?
+      serializer.set_params(params, serializer, name: "AWSAccountIds", value: aws_account_ids) if !aws_account_ids.nil?
+      serializer.set_params(params, serializer, name: "Actions", value: actions) if !actions.nil?
     end
   end
 
-  record AttributeNameList
+  record AttributeNameList,
+    list : Array(QueueAttributeName) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "AttributeName.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record BatchEntryIdsNotDistinct
 
@@ -38,11 +74,33 @@ module Aws::SQS::Types
     code         : String,
     message      : String?
 
-  record BatchResultErrorEntryList
+  record BatchResultErrorEntryList,
+    list : Array(BatchResultErrorEntry) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "BatchResultErrorEntry.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record Binary
 
-  record BinaryList
+  record BinaryList,
+    list : Array(Binary) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "BinaryListValue.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record Boolean
 
@@ -50,13 +108,13 @@ module Aws::SQS::Types
 
   record ChangeMessageVisibilityBatchRequest,
     queue_url : String,
-    entries   : ChangeMessageVisibilityBatchRequestEntryList do
+    entries   : ChangeMessageVisibilityBatchRequestEntryList  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["Entries"] = serializer.serialize(entries) if !entries.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "Entries", value: entries) if !entries.nil?
     end
   end
 
@@ -65,7 +123,18 @@ module Aws::SQS::Types
     receipt_handle     : String,
     visibility_timeout : Integer?
 
-  record ChangeMessageVisibilityBatchRequestEntryList
+  record ChangeMessageVisibilityBatchRequestEntryList,
+    list : Array(ChangeMessageVisibilityBatchRequestEntry) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "ChangeMessageVisibilityBatchRequestEntry.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record ChangeMessageVisibilityBatchResult,
     successful : ChangeMessageVisibilityBatchResultEntryList,
@@ -74,33 +143,44 @@ module Aws::SQS::Types
   record ChangeMessageVisibilityBatchResultEntry,
     id : String
 
-  record ChangeMessageVisibilityBatchResultEntryList
+  record ChangeMessageVisibilityBatchResultEntryList,
+    list : Array(ChangeMessageVisibilityBatchResultEntry) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "ChangeMessageVisibilityBatchResultEntry.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record ChangeMessageVisibilityRequest,
     queue_url          : String,
     receipt_handle     : String,
-    visibility_timeout : Integer do
+    visibility_timeout : Integer  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["ReceiptHandle"] = serializer.serialize(receipt_handle) if !receipt_handle.nil?
-      params["VisibilityTimeout"] = serializer.serialize(visibility_timeout) if !visibility_timeout.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "ReceiptHandle", value: receipt_handle) if !receipt_handle.nil?
+      serializer.set_params(params, serializer, name: "VisibilityTimeout", value: visibility_timeout) if !visibility_timeout.nil?
     end
   end
 
   record CreateQueueRequest,
     queue_name : String,
     attributes : QueueAttributeMap?,
-    tags       : TagMap? do
+    tags       : TagMap?  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueName"] = serializer.serialize(queue_name) if !queue_name.nil?
-      params["Attributes"] = serializer.serialize(attributes) if !attributes.nil?
-      params["tags"] = serializer.serialize(tags) if !tags.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueName", value: queue_name) if !queue_name.nil?
+      serializer.set_params(params, serializer, name: "Attributes", value: attributes) if !attributes.nil?
+      serializer.set_params(params, serializer, name: "tags", value: tags) if !tags.nil?
     end
   end
 
@@ -109,13 +189,13 @@ module Aws::SQS::Types
 
   record DeleteMessageBatchRequest,
     queue_url : String,
-    entries   : DeleteMessageBatchRequestEntryList do
+    entries   : DeleteMessageBatchRequestEntryList  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["Entries"] = serializer.serialize(entries) if !entries.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "Entries", value: entries) if !entries.nil?
     end
   end
 
@@ -123,7 +203,18 @@ module Aws::SQS::Types
     id             : String,
     receipt_handle : String
 
-  record DeleteMessageBatchRequestEntryList
+  record DeleteMessageBatchRequestEntryList,
+    list : Array(DeleteMessageBatchRequestEntry) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "DeleteMessageBatchRequestEntry.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record DeleteMessageBatchResult,
     successful : DeleteMessageBatchResultEntryList,
@@ -132,47 +223,58 @@ module Aws::SQS::Types
   record DeleteMessageBatchResultEntry,
     id : String
 
-  record DeleteMessageBatchResultEntryList
+  record DeleteMessageBatchResultEntryList,
+    list : Array(DeleteMessageBatchResultEntry) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "DeleteMessageBatchResultEntry.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record DeleteMessageRequest,
     queue_url      : String,
-    receipt_handle : String do
+    receipt_handle : String  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["ReceiptHandle"] = serializer.serialize(receipt_handle) if !receipt_handle.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "ReceiptHandle", value: receipt_handle) if !receipt_handle.nil?
     end
   end
 
   record DeleteQueueRequest,
-    queue_url : String do
+    queue_url : String  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
     end
   end
 
-  record EmptyBatchRequest do
+  record EmptyBatchRequest  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
+    def set_params(params : HTTP::Params, serializer)
     end
   end
 
   record GetQueueAttributesRequest,
     queue_url       : String,
-    attribute_names : AttributeNameList? do
+    attribute_names : AttributeNameList?  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["AttributeNames"] = serializer.serialize(attribute_names) if !attribute_names.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "AttributeNames", value: attribute_names) if !attribute_names.nil?
     end
   end
 
@@ -181,13 +283,13 @@ module Aws::SQS::Types
 
   record GetQueueUrlRequest,
     queue_name                 : String,
-    queue_owner_aws_account_id : String? do
+    queue_owner_aws_account_id : String?  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueName"] = serializer.serialize(queue_name) if !queue_name.nil?
-      params["QueueOwnerAWSAccountId"] = serializer.serialize(queue_owner_aws_account_id) if !queue_owner_aws_account_id.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueName", value: queue_name) if !queue_name.nil?
+      serializer.set_params(params, serializer, name: "QueueOwnerAWSAccountId", value: queue_owner_aws_account_id) if !queue_owner_aws_account_id.nil?
     end
   end
 
@@ -207,14 +309,14 @@ module Aws::SQS::Types
   record ListDeadLetterSourceQueuesRequest,
     queue_url   : String,
     next_token  : Token?,
-    max_results : BoxedInteger? do
+    max_results : BoxedInteger?  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["NextToken"] = serializer.serialize(next_token) if !next_token.nil?
-      params["MaxResults"] = serializer.serialize(max_results) if !max_results.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "NextToken", value: next_token) if !next_token.nil?
+      serializer.set_params(params, serializer, name: "MaxResults", value: max_results) if !max_results.nil?
     end
   end
 
@@ -223,12 +325,12 @@ module Aws::SQS::Types
     next_token : Token?
 
   record ListQueueTagsRequest,
-    queue_url : String do
+    queue_url : String  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
     end
   end
 
@@ -238,14 +340,14 @@ module Aws::SQS::Types
   record ListQueuesRequest,
     queue_name_prefix : String?,
     next_token        : Token?,
-    max_results       : BoxedInteger? do
+    max_results       : BoxedInteger?  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueNamePrefix"] = serializer.serialize(queue_name_prefix) if !queue_name_prefix.nil?
-      params["NextToken"] = serializer.serialize(next_token) if !next_token.nil?
-      params["MaxResults"] = serializer.serialize(max_results) if !max_results.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueNamePrefix", value: queue_name_prefix) if !queue_name_prefix.nil?
+      serializer.set_params(params, serializer, name: "NextToken", value: next_token) if !next_token.nil?
+      serializer.set_params(params, serializer, name: "MaxResults", value: max_results) if !max_results.nil?
     end
   end
 
@@ -264,7 +366,18 @@ module Aws::SQS::Types
 
   record MessageAttributeName
 
-  record MessageAttributeNameList
+  record MessageAttributeNameList,
+    list : Array(MessageAttributeName) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "MessageAttributeName.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record MessageAttributeValue,
     string_value       : String?,
@@ -277,15 +390,39 @@ module Aws::SQS::Types
 
   record MessageBodySystemAttributeMap
 
-  record MessageList
+  record MessageList,
+    list : Array(Message) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "Message.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record MessageNotInflight
 
   record MessageSystemAttributeMap
 
-  record MessageSystemAttributeName
+  enum MessageSystemAttributeName
+    SenderId
+    SentTimestamp
+    ApproximateReceiveCount
+    ApproximateFirstReceiveTimestamp
+    SequenceNumber
+    MessageDeduplicationId
+    MessageGroupId
+    AWSTraceHeader
+  end
 
-  record MessageSystemAttributeNameForSends
+
+  enum MessageSystemAttributeNameForSends
+    AWSTraceHeader
+  end
+
 
   record MessageSystemAttributeValue,
     string_value       : String?,
@@ -299,18 +436,38 @@ module Aws::SQS::Types
   record PurgeQueueInProgress
 
   record PurgeQueueRequest,
-    queue_url : String do
+    queue_url : String  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
     end
   end
 
   record QueueAttributeMap
 
-  record QueueAttributeName
+  enum QueueAttributeName
+    All
+    Policy
+    VisibilityTimeout
+    MaximumMessageSize
+    MessageRetentionPeriod
+    ApproximateNumberOfMessages
+    ApproximateNumberOfMessagesNotVisible
+    CreatedTimestamp
+    LastModifiedTimestamp
+    QueueArn
+    ApproximateNumberOfMessagesDelayed
+    DelaySeconds
+    ReceiveMessageWaitTimeSeconds
+    RedrivePolicy
+    FifoQueue
+    ContentBasedDeduplication
+    KmsMasterKeyId
+    KmsDataKeyReusePeriodSeconds
+  end
+
 
   record QueueDeletedRecently
 
@@ -318,7 +475,18 @@ module Aws::SQS::Types
 
   record QueueNameExists
 
-  record QueueUrlList
+  record QueueUrlList,
+    list : Array(String) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "QueueUrl.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record ReceiptHandleIsInvalid
 
@@ -329,18 +497,18 @@ module Aws::SQS::Types
     max_number_of_messages     : Integer?,
     visibility_timeout         : Integer?,
     wait_time_seconds          : Integer?,
-    receive_request_attempt_id : String? do
+    receive_request_attempt_id : String?  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["AttributeNames"] = serializer.serialize(attribute_names) if !attribute_names.nil?
-      params["MessageAttributeNames"] = serializer.serialize(message_attribute_names) if !message_attribute_names.nil?
-      params["MaxNumberOfMessages"] = serializer.serialize(max_number_of_messages) if !max_number_of_messages.nil?
-      params["VisibilityTimeout"] = serializer.serialize(visibility_timeout) if !visibility_timeout.nil?
-      params["WaitTimeSeconds"] = serializer.serialize(wait_time_seconds) if !wait_time_seconds.nil?
-      params["ReceiveRequestAttemptId"] = serializer.serialize(receive_request_attempt_id) if !receive_request_attempt_id.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "AttributeNames", value: attribute_names) if !attribute_names.nil?
+      serializer.set_params(params, serializer, name: "MessageAttributeNames", value: message_attribute_names) if !message_attribute_names.nil?
+      serializer.set_params(params, serializer, name: "MaxNumberOfMessages", value: max_number_of_messages) if !max_number_of_messages.nil?
+      serializer.set_params(params, serializer, name: "VisibilityTimeout", value: visibility_timeout) if !visibility_timeout.nil?
+      serializer.set_params(params, serializer, name: "WaitTimeSeconds", value: wait_time_seconds) if !wait_time_seconds.nil?
+      serializer.set_params(params, serializer, name: "ReceiveRequestAttemptId", value: receive_request_attempt_id) if !receive_request_attempt_id.nil?
     end
   end
 
@@ -349,25 +517,25 @@ module Aws::SQS::Types
 
   record RemovePermissionRequest,
     queue_url : String,
-    label     : String do
+    label     : String  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["Label"] = serializer.serialize(label) if !label.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "Label", value: label) if !label.nil?
     end
   end
 
   record SendMessageBatchRequest,
     queue_url : String,
-    entries   : SendMessageBatchRequestEntryList do
+    entries   : SendMessageBatchRequestEntryList  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["Entries"] = serializer.serialize(entries) if !entries.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "Entries", value: entries) if !entries.nil?
     end
   end
 
@@ -380,7 +548,18 @@ module Aws::SQS::Types
     message_deduplication_id  : String?,
     message_group_id          : String?
 
-  record SendMessageBatchRequestEntryList
+  record SendMessageBatchRequestEntryList,
+    list : Array(SendMessageBatchRequestEntry) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "SendMessageBatchRequestEntry.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record SendMessageBatchResult,
     successful : SendMessageBatchResultEntryList,
@@ -394,7 +573,18 @@ module Aws::SQS::Types
     md5_of_message_system_attributes : String?,
     sequence_number                  : String?
 
-  record SendMessageBatchResultEntryList
+  record SendMessageBatchResultEntryList,
+    list : Array(SendMessageBatchResultEntry) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "SendMessageBatchResultEntry.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record SendMessageRequest,
     queue_url                 : String,
@@ -403,18 +593,18 @@ module Aws::SQS::Types
     message_attributes        : MessageBodyAttributeMap?,
     message_system_attributes : MessageBodySystemAttributeMap?,
     message_deduplication_id  : String?,
-    message_group_id          : String? do
+    message_group_id          : String?  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["MessageBody"] = serializer.serialize(message_body) if !message_body.nil?
-      params["DelaySeconds"] = serializer.serialize(delay_seconds) if !delay_seconds.nil?
-      params["MessageAttributes"] = serializer.serialize(message_attributes) if !message_attributes.nil?
-      params["MessageSystemAttributes"] = serializer.serialize(message_system_attributes) if !message_system_attributes.nil?
-      params["MessageDeduplicationId"] = serializer.serialize(message_deduplication_id) if !message_deduplication_id.nil?
-      params["MessageGroupId"] = serializer.serialize(message_group_id) if !message_group_id.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "MessageBody", value: message_body) if !message_body.nil?
+      serializer.set_params(params, serializer, name: "DelaySeconds", value: delay_seconds) if !delay_seconds.nil?
+      serializer.set_params(params, serializer, name: "MessageAttributes", value: message_attributes) if !message_attributes.nil?
+      serializer.set_params(params, serializer, name: "MessageSystemAttributes", value: message_system_attributes) if !message_system_attributes.nil?
+      serializer.set_params(params, serializer, name: "MessageDeduplicationId", value: message_deduplication_id) if !message_deduplication_id.nil?
+      serializer.set_params(params, serializer, name: "MessageGroupId", value: message_group_id) if !message_group_id.nil?
     end
   end
 
@@ -427,33 +617,55 @@ module Aws::SQS::Types
 
   record SetQueueAttributesRequest,
     queue_url  : String,
-    attributes : QueueAttributeMap do
+    attributes : QueueAttributeMap  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["Attributes"] = serializer.serialize(attributes) if !attributes.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "Attributes", value: attributes) if !attributes.nil?
     end
   end
 
-  record StringList
+  record StringList,
+    list : Array(String) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "StringListValue.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record TagKey
 
-  record TagKeyList
+  record TagKeyList,
+    list : Array(TagKey) do
+
+    include Input
+    include InputList
+
+    def set_params(params : HTTP::Params, serializer)
+      list.try{|_list| _list.each_with_index do |v, i|
+        serializer.set_params(params, serializer, name: "TagKey.#{i+1}", value: v)
+      end}
+    end
+  end
 
   record TagMap
 
   record TagQueueRequest,
     queue_url : String,
-    tags      : TagMap do
+    tags      : TagMap  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["Tags"] = serializer.serialize(tags) if !tags.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "Tags", value: tags) if !tags.nil?
     end
   end
 
@@ -461,11 +673,11 @@ module Aws::SQS::Types
 
   record Token
 
-  record TooManyEntriesInBatchRequest do
+  record TooManyEntriesInBatchRequest  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
+    def set_params(params : HTTP::Params, serializer)
     end
   end
 
@@ -473,13 +685,13 @@ module Aws::SQS::Types
 
   record UntagQueueRequest,
     queue_url : String,
-    tag_keys  : TagKeyList do
+    tag_keys  : TagKeyList  do
 
     include Input
 
-    def fill(params : HTTP::Params, serializer)
-      params["QueueUrl"] = serializer.serialize(queue_url) if !queue_url.nil?
-      params["TagKeys"] = serializer.serialize(tag_keys) if !tag_keys.nil?
+    def set_params(params : HTTP::Params, serializer)
+      serializer.set_params(params, serializer, name: "QueueUrl", value: queue_url) if !queue_url.nil?
+      serializer.set_params(params, serializer, name: "TagKeys", value: tag_keys) if !tag_keys.nil?
     end
   end
 

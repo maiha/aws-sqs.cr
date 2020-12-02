@@ -42,16 +42,13 @@ class GenCode
   end
 
   class Field
-    getter klass
+    getter param_key
     getter name
     getter type
     getter required
+    getter flattend
 
-    def initialize(@klass : String, @name : String, @type : String, @required : Bool)
-    end
-
-    def to_param_key : String
-      klass
+    def initialize(@param_key : String, @name : String, @type : String, @required : Bool, @flattened : Bool)
     end
 
     def to_method_arg : String
@@ -89,11 +86,16 @@ class GenCode
       structure: ShapeStructure,
     }
     property type : String
-
+    property flattened : Bool?
+    
     include Enumerable(Field)
 
     def each(&block : Field -> _)
       nil
+    end
+
+    def is_enum? : Bool
+      false
     end
   end
 
@@ -107,6 +109,38 @@ class GenCode
   end
 
   class ShapeString < Shape
+    # "enum": [
+    #   "AWSTraceHeader"
+    # ]
+    @[JSON::Field(key: "enum")]
+    property _enum : Array(String)?
+
+    def is_enum? : Bool
+      !! _enum
+    end
+
+    def each(&block : Field -> _)
+      if array = _enum
+        array.each do |v|
+          field = Field.new(
+            param_key: v,
+            name: v,
+            type: "String",
+            required: true,
+            flattened: !!flattened,
+          )
+          yield field
+        end
+      else
+        field = Field.new(
+          param_key: "unknown",
+          name: "unknown",
+          type: "String",
+          required: true,
+          flattened: !!flattened,
+        )
+      end
+    end
   end
 
   class ShapeMap < Shape
@@ -126,14 +160,29 @@ class GenCode
   end
 
   class ShapeList < Shape
+    #   "AttributeNameList": {
     #     "type": "list",
     #     "member": {
-    #       "shape": "String",
-    #       "locationName": "ActionName"
+    #       "shape": "QueueAttributeName",
+    #       "locationName": "AttributeName"
     #     },
     #     "flattened": true
     property member : Hash(String, String)
     #      property flattended : Bool
+
+    def each(&block : Field -> _)
+      hash = member
+      name = hash["locationName"] || raise ArgumentError.new("locationName is missing: hash=#{hash.inspect}")
+      type = hash["shape"]        || raise ArgumentError.new("shape is missing: hash=#{hash.inspect}")
+      field = Field.new(
+        param_key: name,
+        name: name.underscore,
+        type: type,
+        required: true,
+        flattened: !!flattened,
+      )
+      yield field
+    end
   end
 
   class ShapeStructure < Shape
@@ -168,17 +217,17 @@ class GenCode
       members.each do |name, hash|
         type = hash["shape"]
         case type
-        when Bool
-          raise ArgumentError.new("shape is bool: name=[#{name}], hash=#{hash.inspect}")
-
         when String
           field = Field.new(
-            klass: name,
+            param_key: name,
             name: name.underscore,
             type: type,
             required: !!required.try(&.includes?(name)),
+            flattened: !!flattened,
           )
           yield field
+        else
+          raise ArgumentError.new("shape is #{type.class}: name=[#{name}], hash=#{hash.inspect}")
         end
       end
     end
@@ -253,46 +302,95 @@ class GenCode
       s.puts %Q|module Aws::#{@service_name.upcase}::Types|
 
       s.puts %Q|  module Input|
-      s.puts %Q|    abstract def fill(params : HTTP::Params, serializer)|
+      s.puts %Q|    abstract def set_params(params : HTTP::Params, serializer)|
+      s.puts %Q|  end|
+      s.puts
+      
+      s.puts %Q|  module InputList|
       s.puts %Q|  end|
       s.puts
       
       shapes.each do |name, shape|
         next if ignore_type?(name)
-        s.print %Q|  record #{name}|
 
-        if shape.any?
-          name_maxlen = shape.map(&.name.size).max
-          shape.each do |f|
-            fixed_name = f.name.ljust(name_maxlen)
-            nullable = f.required ? "" : "?"
-            s.print %Q|,\n    #{fixed_name} : #{f.type}#{nullable}|
-          end
-        end
-
-        if name =~ /Request$/
-          s.puts %Q| do|
-          s.puts
-          s.puts %Q|    include Input|
-          s.puts
-          s.puts %Q|    def fill(params : HTTP::Params, serializer)|
-          shape.each do |f|
-            s.puts %Q|      params["#{f.to_param_key}"] = serializer.serialize(#{f.name}) if !#{f.name}.nil?|
-          end
-          s.puts %Q|    end|
-          s.puts %Q|  end|
+        case shape
+        when.is_enum?
+          gen_type_enum(s, name, shape)
+        when ShapeList
+          gen_type_list(s, name, shape)
         else
-          s.puts
+          gen_type_default(s, name, shape)
         end
-
         s.puts
       end
-
       s.puts %Q|end|
     end
 
     File.write(path, data)
     puts "Created #{path}"
+  end
+
+  def gen_type_enum(s, name, shape)
+    s.puts   %Q|  enum #{name}|
+    shape.each do |f|
+      s.puts %Q|    #{f.name}|
+    end
+    s.puts   %Q|  end|
+    s.puts
+  end
+
+  def gen_type_list(s, name, shape)
+    shape.each do |f|
+      # f: @param_key="AttributeName", @name="attribute_name", @type="QueueAttributeName", @required=true
+      # ```
+      # attribute_names : Array(QueueAttributeName)
+      # ```
+      nullable = f.required ? "" : "?"
+      s.puts %Q|  record #{name},|
+      s.puts %Q|    list : Array(#{f.type})#{nullable} do|
+      s.puts
+      s.puts %Q|    include Input|
+      s.puts %Q|    include InputList|
+      s.puts
+      s.puts %Q|    def set_params(params : HTTP::Params, serializer)|
+      s.puts %Q[      list.try{|_list| _list.each_with_index do |v, i|]
+      s.puts %Q|        serializer.set_params(params, serializer, name: "#{f.param_key}.\#{i+1}", value: v)|
+      s.puts %Q|      end}|
+      s.puts %Q|    end|
+      s.puts %Q|  end|
+    end
+  end
+
+  def gen_type_default(s, name, shape)
+    s.print %Q|  record #{name}|
+    if shape.any?
+      name_maxlen = shape.map(&.name.size).max
+      shape.each do |f|
+        # ```
+        # queue_url       : String,
+        # attribute_names : AttributeNameList?,
+        # ```
+        fixed_name = f.name.ljust(name_maxlen)
+        nullable = f.required ? "" : "?"
+        s.print %Q|,\n    #{fixed_name} : #{f.type}#{nullable}|
+      end
+    end
+
+    if name.ends_with?("Request")
+      s.puts     %Q|  do|
+      s.puts
+      s.puts     %Q|    include Input|
+      s.puts     %Q|    include InputList| if name.ends_with?("List")
+      s.puts
+      s.puts     %Q|    def set_params(params : HTTP::Params, serializer)|
+      shape.each do |f|
+        s.puts   %Q|      serializer.set_params(params, serializer, name: "#{f.param_key}", value: #{f.name}) if !#{f.name}.nil?|
+      end
+      s.puts     %Q|    end|
+      s.puts     %Q|  end|
+    else
+      s.puts
+    end
   end
 
   def gen_api
