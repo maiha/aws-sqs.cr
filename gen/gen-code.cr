@@ -11,6 +11,14 @@
 
 require "json"
 
+SHAPE_NATIVE_MAPPING = {
+  "Integer" => "Int32",
+}
+private def extract_shape(hash)
+  shape = hash["shape"] || raise ArgumentError.new("shape is missing: hash=#{hash.inspect}")
+  return SHAPE_NATIVE_MAPPING[shape]? || shape
+end
+
 class GenCode
   class Root
     include JSON::Serializable
@@ -173,7 +181,7 @@ class GenCode
     def each(&block : Field -> _)
       hash = member
       name = hash["locationName"] || raise ArgumentError.new("locationName is missing: hash=#{hash.inspect}")
-      type = hash["shape"]        || raise ArgumentError.new("shape is missing: hash=#{hash.inspect}")
+      type = extract_shape(hash)
       field = Field.new(
         param_key: name,
         name: name.underscore,
@@ -215,7 +223,7 @@ class GenCode
 
     def each(&block : Field -> _)
       members.each do |name, hash|
-        type = hash["shape"]
+        type = extract_shape(hash)
         case type
         when String
           field = Field.new(
@@ -410,7 +418,7 @@ class GenCode
         http_method = op.http["method"].to_s.upcase
         request_uri = op.http["requestUri"]
 
-        input_shape_name = op.input["shape"]
+        input_shape_name = extract_shape(op.input)
         input_shape = shapes[input_shape_name]? || raise ArgumentError.new("no shapes [#{input_shape_name}]")
         method_arg  = input_shape.map(&.to_method_arg).join(", ")
 

@@ -27,6 +27,7 @@ client.send_message(queue_url: queue_url, message_body: "message")
 client.send_message(queue_url: queue_url, message_body: "message", message_group_id: "g1", message_deduplication_id: "d1")
 client.receive_message(queue_url: queue_url)
 client.delete_message(queue_url: queue_url, receipt_handle: "MbZj6wDWli...")
+client.change_message_visibility(queue_url: queue_url, receipt_handle: "MbZj6wDWli...", visibility_timeout: 60)
 ```
 
 ## Samples
@@ -37,16 +38,17 @@ $ export AWS_ACCESS_KEY_ID=XXXXXXXXXXXXXXXXXXXX
 $ export AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 $ crystal samples/list_queues.cr
-$ crystal samples/get_queue_attributes.cr "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue"
-$ crystal samples/send_message.cr         "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue" "hello"
-$ crystal samples/receive_message.cr      "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue"
-$ crystal samples/delete_message.cr       "https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue" "MbZj6wDWli..."
+$ crystal samples/get_queue_attributes.cr      "https://.../MyQueue"
+$ crystal samples/send_message.cr              "https://.../MyQueue" "hello"
+$ crystal samples/receive_message.cr           "https://.../MyQueue"
+$ crystal samples/delete_message.cr            "https://.../MyQueue" "MbZj6wDWli..."
+$ crystal samples/change_message_visibility.cr "https://.../MyQueue" "MbZj6wDWli..." 60
 ```
 
 ## API
 
 * [ ] add_permission
-* [ ] change_message_visibility
+* [x] change_message_visibility
 * [ ] change_message_visibility_batch
 * [ ] create_queue
 * [x] delete_message
@@ -86,6 +88,7 @@ $ crystal spec
 
 ## Thanks
 
-- [sdogruyol](https://github.com/sdogruyol) - basic codes for `Aws::SQS`
-- [aws-sdk-go](https://github.com/aws/aws-sdk-go) - This library derives its AWS API schema from sdk-sdk-go.
-  - Apache License 2.0
+- [sdogruyol](https://github.com/sdogruyol) - This library derives basic codes about `Aws::SQS` from
+  - https://github.com/sdogruyol/aws : [MIT License](https://github.com/sdogruyol/aws/blob/master/LICENSE)
+- [aws-sdk-go](https://github.com/aws/aws-sdk-go) - This library derives its AWS API schema from
+  - https://github.com/aws/aws-sdk-go : [Apache License 2.0](https://github.com/aws/aws-sdk-go/blob/master/LICENSE.txt)

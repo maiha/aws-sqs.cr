@@ -121,7 +121,7 @@ module Aws::SQS::Types
   record ChangeMessageVisibilityBatchRequestEntry,
     id                 : String,
     receipt_handle     : String,
-    visibility_timeout : Integer?
+    visibility_timeout : Int32?
 
   record ChangeMessageVisibilityBatchRequestEntryList,
     list : Array(ChangeMessageVisibilityBatchRequestEntry) do
@@ -159,7 +159,7 @@ module Aws::SQS::Types
   record ChangeMessageVisibilityRequest,
     queue_url          : String,
     receipt_handle     : String,
-    visibility_timeout : Integer  do
+    visibility_timeout : Int32  do
 
     include Input
 
@@ -494,9 +494,9 @@ module Aws::SQS::Types
     queue_url                  : String,
     attribute_names            : AttributeNameList?,
     message_attribute_names    : MessageAttributeNameList?,
-    max_number_of_messages     : Integer?,
-    visibility_timeout         : Integer?,
-    wait_time_seconds          : Integer?,
+    max_number_of_messages     : Int32?,
+    visibility_timeout         : Int32?,
+    wait_time_seconds          : Int32?,
     receive_request_attempt_id : String?  do
 
     include Input
@@ -542,7 +542,7 @@ module Aws::SQS::Types
   record SendMessageBatchRequestEntry,
     id                        : String,
     message_body              : String,
-    delay_seconds             : Integer?,
+    delay_seconds             : Int32?,
     message_attributes        : MessageBodyAttributeMap?,
     message_system_attributes : MessageBodySystemAttributeMap?,
     message_deduplication_id  : String?,
@@ -589,7 +589,7 @@ module Aws::SQS::Types
   record SendMessageRequest,
     queue_url                 : String,
     message_body              : String,
-    delay_seconds             : Integer?,
+    delay_seconds             : Int32?,
     message_attributes        : MessageBodyAttributeMap?,
     message_system_attributes : MessageBodySystemAttributeMap?,
     message_deduplication_id  : String?,

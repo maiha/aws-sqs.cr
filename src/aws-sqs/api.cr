@@ -18,7 +18,7 @@ module Aws::SQS::API
     execute(request, input)
   end
 
-  def change_message_visibility(queue_url : String, receipt_handle : String, visibility_timeout : Integer)
+  def change_message_visibility(queue_url : String, receipt_handle : String, visibility_timeout : Int32)
     input = ChangeMessageVisibilityRequest.new(
       queue_url: queue_url,
       receipt_handle: receipt_handle,
@@ -139,7 +139,7 @@ module Aws::SQS::API
     execute(request, input)
   end
 
-  def receive_message(queue_url : String, attribute_names : AttributeNameList? = nil, message_attribute_names : MessageAttributeNameList? = nil, max_number_of_messages : Integer? = nil, visibility_timeout : Integer? = nil, wait_time_seconds : Integer? = nil, receive_request_attempt_id : String? = nil)
+  def receive_message(queue_url : String, attribute_names : AttributeNameList? = nil, message_attribute_names : MessageAttributeNameList? = nil, max_number_of_messages : Int32? = nil, visibility_timeout : Int32? = nil, wait_time_seconds : Int32? = nil, receive_request_attempt_id : String? = nil)
     input = ReceiveMessageRequest.new(
       queue_url: queue_url,
       attribute_names: attribute_names,
@@ -164,7 +164,7 @@ module Aws::SQS::API
     execute(request, input)
   end
 
-  def send_message(queue_url : String, message_body : String, delay_seconds : Integer? = nil, message_attributes : MessageBodyAttributeMap? = nil, message_system_attributes : MessageBodySystemAttributeMap? = nil, message_deduplication_id : String? = nil, message_group_id : String? = nil)
+  def send_message(queue_url : String, message_body : String, delay_seconds : Int32? = nil, message_attributes : MessageBodyAttributeMap? = nil, message_system_attributes : MessageBodySystemAttributeMap? = nil, message_deduplication_id : String? = nil, message_group_id : String? = nil)
     input = SendMessageRequest.new(
       queue_url: queue_url,
       message_body: message_body,
