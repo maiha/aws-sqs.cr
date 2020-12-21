@@ -5,14 +5,17 @@ export GNUMAKEFLAGS=--no-print-directory
 ######################################################################
 ### Generations
 
-# AWS_SERVICES=s3 sqs
 AWS_SERVICES=sqs
 AWS_SDK_GO=https://github.com/aws/aws-sdk-go.git
 
 .PHONY: gen
 gen:
+	@make gen/gen-code
 	@make gen/aws-sdk-go
-	@make gen/code
+	@make gen/code -j 8
+
+gen/gen-code: gen/gen-code.cr
+	@crystal build -o "$@" "$<"
 
 gen/aws-sdk-go:
 	rm -rf "$@.tmp"
@@ -20,10 +23,18 @@ gen/aws-sdk-go:
 	cd "$@.tmp" && git sparse-checkout set $(addprefix models/apis/,$(AWS_SERVICES))
 	mv "$@.tmp" "$@"
 
-gen/code: $(addprefix gen/code/,$(AWS_SERVICES))
+_AWS_SERVICES=$(sort $(notdir $(shell find gen/aws-sdk-go/models/apis/ -maxdepth 1 -type d | grep -E '/([a-z0-9]+)$$' )))
+gen/code: $(addprefix gen/code/,$(_AWS_SERVICES))
 
 gen/code/%: gen/aws-sdk-go
-	crystal gen/gen-code.cr "$<" "$*"
+	@mkdir -p "src/aws-$*"
+	@mkdir -p "gen/logs"
+	./gen/gen-code "$<" "$*" > "gen/logs/$*.log" 2>&1 || make "gen/fail/aws-$*"
+
+gen/fail/%:
+	@rm -rf      "gen/failed/$*"
+	@mkdir -p    "gen/failed/$*"
+	@mv "src/$*" "gen/failed/"
 
 ######################################################################
 ### Versioning

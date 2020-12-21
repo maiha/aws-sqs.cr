@@ -10,16 +10,51 @@
 # ```
 
 require "json"
+require "log"
 
-SHAPE_NATIVE_MAPPING = {
-  "Integer" => "Int32",
+NAME2SHAPE = Hash(String, GenCode::Shape).new
+CRYSTAL_TYPE_MAPPING = {
+  "BoxedInteger" => "Int32",
 }
-private def extract_shape(hash)
-  shape = hash["shape"] || raise ArgumentError.new("shape is missing: hash=#{hash.inspect}")
-  return SHAPE_NATIVE_MAPPING[shape]? || shape
+
+def resolve_type(name : String) : String
+  if type = CRYSTAL_TYPE_MAPPING[name]?
+    return type
+  end
+
+  if shape = NAME2SHAPE[name]?
+    case shape
+    when .is_enum?
+      return name
+    when GenCode::NativeType
+      return shape.native_type
+    end
+  end
+  return name
+end
+
+# {"shape" => "AddPermissionRequest"}
+def resolve_type(hash : Hash(String, String)) : String
+  name = hash["shape"]? || raise "BUG: resolve_type is called without shape. [#{hash.inspect}]"
+  resolve_type(name)
+end
+
+def resolve_type(name) : String
+  raise "BUG: resolve_type is called without String. [#{name.inspect}]"
 end
 
 class GenCode
+  module NativeType
+    macro included
+      def native_type : String
+        NATIVE_TYPE
+      end
+    end
+  end
+  
+  #  "metadata":{
+  #    "apiVersion":"2012-11-05",
+  #    "serviceId":"SQS",
   class Root
     include JSON::Serializable
     property metadata : Hash(String, String)
@@ -87,8 +122,12 @@ class GenCode
     use_json_discriminator "type", {
       blob: ShapeBlob,
       boolean: ShapeBoolean,
+      double: ShapeDouble,
+      float: ShapeFloat,
       integer: ShapeInteger,
+      long: ShapeLong,
       string: ShapeString,
+      timestamp: ShapeTimestamp,
       map: ShapeMap,
       list: ShapeList,
       structure: ShapeStructure,
@@ -111,12 +150,34 @@ class GenCode
   end
 
   class ShapeBoolean < Shape
+    include NativeType
+    NATIVE_TYPE = "Bool"
+  end
+
+  class ShapeDouble < Shape
+    include NativeType
+    NATIVE_TYPE = "Float64"
+  end
+
+  class ShapeFloat < Shape
+    include NativeType
+    NATIVE_TYPE = "Float32"
   end
 
   class ShapeInteger < Shape
+    include NativeType
+    NATIVE_TYPE = "Int32"
+  end
+
+  class ShapeLong < Shape
+    include NativeType
+    NATIVE_TYPE = "Int64"
   end
 
   class ShapeString < Shape
+    include NativeType
+    NATIVE_TYPE = "String"
+
     # "enum": [
     #   "AWSTraceHeader"
     # ]
@@ -151,6 +212,11 @@ class GenCode
     end
   end
 
+  class ShapeTimestamp < Shape
+    include NativeType
+    NATIVE_TYPE = "Time"
+  end
+
   class ShapeMap < Shape
     #      "type": "map",
     #      "key": {
@@ -175,13 +241,19 @@ class GenCode
     #       "locationName": "AttributeName"
     #     },
     #     "flattened": true
+
+    # Or, the case of missing locationName
+    #     "member": {
+    #       "shape": "action",
+    #     },
+
     property member : Hash(String, String)
     #      property flattended : Bool
 
     def each(&block : Field -> _)
       hash = member
-      name = hash["locationName"] || raise ArgumentError.new("locationName is missing: hash=#{hash.inspect}")
-      type = extract_shape(hash)
+      name = hash["locationName"]? || hash["shape"]? || raise ArgumentError.new("locationName is missing: hash=#{hash.inspect}")
+      type = resolve_type(hash["shape"])
       field = Field.new(
         param_key: name,
         name: name.underscore,
@@ -223,7 +295,7 @@ class GenCode
 
     def each(&block : Field -> _)
       members.each do |name, hash|
-        type = extract_shape(hash)
+        type = resolve_type(hash["shape"])
         case type
         when String
           field = Field.new(
@@ -260,26 +332,24 @@ class GenCode
     end
   end
 
-  def self.build(root : Root)
-    shapes = root.shapes
-    root.operations.each do |name, op|
-      puts build_method_definition(op, shapes)
-      puts
-    end
-  end
-
   ######################################################################
   ### main
   
   property root   : Root
   property shapes : Hash(String, Shape)
   property api_version : String
+  property service_id : String
 
   delegate operations, shapes, to: root
 
   def initialize(@service_name : String, @json_path : String)
     @root   = Root.from_json(File.read(@json_path))
     @shapes = @root.shapes
+    @native_types = Hash(String, String).new
+    @service_id = (@root.metadata["serviceId"]? || @service_name.capitalize).gsub(/\s+/, "")
+
+    # register shape maps in constant for global accesss
+    NAME2SHAPE.merge!(shapes)
 
     # json_path: "aws-sdk-go/models/apis/sqs/2012-11-05/api-2.json"
     case @json_path
@@ -291,7 +361,10 @@ class GenCode
   end
 
   private def ignore_type?(name)
-    %( String ).includes?(name)
+    return true if CRYSTAL_TYPE_MAPPING[name]?
+    return true if name =~ /^[a-z]/
+    return true if %( String ).includes?(name)
+    return false
   end
 
   private def do_not_edit_message
@@ -307,7 +380,7 @@ class GenCode
     data = String.build do |s|
       s.puts do_not_edit_message
       s.puts
-      s.puts %Q|module Aws::#{@service_name.upcase}::Types|
+      s.puts %Q|module Aws::#{@service_id}::Types|
 
       s.puts %Q|  module Input|
       s.puts %Q|    abstract def set_params(params : HTTP::Params, serializer)|
@@ -317,25 +390,33 @@ class GenCode
       s.puts %Q|  module InputList|
       s.puts %Q|  end|
       s.puts
-      
+
+      Log.debug { "iterate shapes: #{shapes.size}" }
       shapes.each do |name, shape|
+        clue = "process shape(#{name}, #{shape.class}) (enum:#{shape.is_enum?}, list:#{shape.is_a?(ShapeList)})"
+        Log.debug { clue }
         next if ignore_type?(name)
 
-        case shape
-        when.is_enum?
-          gen_type_enum(s, name, shape)
-        when ShapeList
-          gen_type_list(s, name, shape)
-        else
-          gen_type_default(s, name, shape)
+        begin
+          case shape
+          when.is_enum?
+            gen_type_enum(s, name, shape)
+          when ShapeList
+            gen_type_list(s, name, shape)
+          else
+            gen_type_default(s, name, shape)
+          end
+          s.puts
+        rescue err
+          Log.fatal { "#{clue}: #{err}" }
+          raise err
         end
-        s.puts
       end
       s.puts %Q|end|
     end
 
     File.write(path, data)
-    puts "Created #{path}"
+    Log.info { "Created #{path}" }
   end
 
   def gen_type_enum(s, name, shape)
@@ -370,6 +451,8 @@ class GenCode
   end
 
   def gen_type_default(s, name, shape)
+    return if name =~ /^[a-z]/
+
     s.print %Q|  record #{name}|
     if shape.any?
       name_maxlen = shape.map(&.name.size).max
@@ -409,16 +492,18 @@ class GenCode
       s.puts
       s.puts %Q|require "./types"|
       s.puts
-      s.puts %Q|module Aws::#{@service_name.upcase}::API|
+      s.puts %Q|module Aws::#{@service_id}::API|
       s.puts %Q|  include Types|
       s.puts
 
       operations.each do |name, op|
+        Log.info { "gen_api: operations[#{name}], op=[#{op.inspect}]" }
+
         method_name = op.name.underscore
         http_method = op.http["method"].to_s.upcase
         request_uri = op.http["requestUri"]
 
-        input_shape_name = extract_shape(op.input)
+        input_shape_name = resolve_type(op.input)
         input_shape = shapes[input_shape_name]? || raise ArgumentError.new("no shapes [#{input_shape_name}]")
         method_arg  = input_shape.map(&.to_method_arg).join(", ")
 
@@ -446,10 +531,15 @@ class GenCode
     end
 
     File.write(path, data)
-    puts "Created #{path}"
+    Log.info { "Created #{path}" }
   end
 end
 
+Log.setup do |c|
+  # level = ENV["DEBUG"]? ? Log::Severity::Debug : Log::Severity::Info
+  level = Log::Severity::Debug
+  c.bind "*", level, Log::IOBackend.new
+end
 
 aws_go_path  = ARGV.shift? || raise ArgumentError.new("arg1: missing aws-go path")
 service_name = ARGV.shift? || raise ArgumentError.new("arg1: missing service name")
@@ -459,3 +549,4 @@ json_path = `find #{aws_go_path}/models/apis/#{service_name} -name 'api*.json' |
 gen = GenCode.new(service_name, json_path)
 gen.gen_types
 gen.gen_api
+

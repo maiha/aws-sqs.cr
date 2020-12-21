@@ -6,3 +6,6 @@
 /.crystal-version
 /.crystal
 /gen/aws-sdk-go
+/gen/failed
+/gen/gen-code
+/gen/logs

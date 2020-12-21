@@ -99,7 +99,7 @@ module Aws::SQS::API
     execute(request, input)
   end
 
-  def list_dead_letter_source_queues(queue_url : String, next_token : Token? = nil, max_results : BoxedInteger? = nil)
+  def list_dead_letter_source_queues(queue_url : String, next_token : String? = nil, max_results : Int32? = nil)
     input = ListDeadLetterSourceQueuesRequest.new(
       queue_url: queue_url,
       next_token: next_token,
@@ -119,7 +119,7 @@ module Aws::SQS::API
     execute(request, input)
   end
 
-  def list_queues(queue_name_prefix : String? = nil, next_token : Token? = nil, max_results : BoxedInteger? = nil)
+  def list_queues(queue_name_prefix : String? = nil, next_token : String? = nil, max_results : Int32? = nil)
     input = ListQueuesRequest.new(
       queue_name_prefix: queue_name_prefix,
       next_token: next_token,

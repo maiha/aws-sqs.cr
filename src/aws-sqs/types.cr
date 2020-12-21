@@ -70,7 +70,7 @@ module Aws::SQS::Types
 
   record BatchResultErrorEntry,
     id           : String,
-    sender_fault : Boolean,
+    sender_fault : Bool,
     code         : String,
     message      : String?
 
@@ -103,8 +103,6 @@ module Aws::SQS::Types
   end
 
   record Boolean
-
-  record BoxedInteger
 
   record ChangeMessageVisibilityBatchRequest,
     queue_url : String,
@@ -308,8 +306,8 @@ module Aws::SQS::Types
 
   record ListDeadLetterSourceQueuesRequest,
     queue_url   : String,
-    next_token  : Token?,
-    max_results : BoxedInteger?  do
+    next_token  : String?,
+    max_results : Int32?  do
 
     include Input
 
@@ -322,7 +320,7 @@ module Aws::SQS::Types
 
   record ListDeadLetterSourceQueuesResult,
     queue_urls : QueueUrlList,
-    next_token : Token?
+    next_token : String?
 
   record ListQueueTagsRequest,
     queue_url : String  do
@@ -339,8 +337,8 @@ module Aws::SQS::Types
 
   record ListQueuesRequest,
     queue_name_prefix : String?,
-    next_token        : Token?,
-    max_results       : BoxedInteger?  do
+    next_token        : String?,
+    max_results       : Int32?  do
 
     include Input
 
@@ -353,7 +351,7 @@ module Aws::SQS::Types
 
   record ListQueuesResult,
     queue_urls : QueueUrlList?,
-    next_token : Token?
+    next_token : String?
 
   record Message,
     message_id                : String?,
@@ -367,7 +365,7 @@ module Aws::SQS::Types
   record MessageAttributeName
 
   record MessageAttributeNameList,
-    list : Array(MessageAttributeName) do
+    list : Array(String) do
 
     include Input
     include InputList
@@ -466,6 +464,8 @@ module Aws::SQS::Types
     ContentBasedDeduplication
     KmsMasterKeyId
     KmsDataKeyReusePeriodSeconds
+    DeduplicationScope
+    FifoThroughputLimit
   end
 
 
@@ -643,7 +643,7 @@ module Aws::SQS::Types
   record TagKey
 
   record TagKeyList,
-    list : Array(TagKey) do
+    list : Array(String) do
 
     include Input
     include InputList
