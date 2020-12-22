@@ -23,7 +23,7 @@ module LocalStack
     it "consumes" do
       res = client.receive_message(queue_url: QUEUE_URL)
       res.status.should eq(HTTP::Status::OK)
-      res.body.should contain("Hello")
+      res.messages.map(&.body).should eq(["Hello"])
     end
   end
 end

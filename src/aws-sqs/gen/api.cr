@@ -13,9 +13,10 @@ module Aws::SQS::API
       aws_account_ids: aws_account_ids,
       actions: actions,
     )
-    params  = build_params(action: "AddPermission", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "AddPermission", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    AddPermissionResponse(AddPermissionRequest, DefaultResult).new(input, response)
   end
 
   def change_message_visibility(queue_url : String, receipt_handle : String, visibility_timeout : Int32)
@@ -24,9 +25,10 @@ module Aws::SQS::API
       receipt_handle: receipt_handle,
       visibility_timeout: visibility_timeout,
     )
-    params  = build_params(action: "ChangeMessageVisibility", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "ChangeMessageVisibility", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    ChangeMessageVisibilityResponse(ChangeMessageVisibilityRequest, DefaultResult).new(input, response)
   end
 
   def change_message_visibility_batch(queue_url : String, entries : ChangeMessageVisibilityBatchRequestEntryList)
@@ -34,9 +36,10 @@ module Aws::SQS::API
       queue_url: queue_url,
       entries: entries,
     )
-    params  = build_params(action: "ChangeMessageVisibilityBatch", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: ChangeMessageVisibilityBatchResult)
+    params   = build_params(action: "ChangeMessageVisibilityBatch", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: ChangeMessageVisibilityBatchResult)
+    ChangeMessageVisibilityBatchResponse(ChangeMessageVisibilityBatchRequest, ChangeMessageVisibilityBatchResult).new(input, response)
   end
 
   def create_queue(queue_name : String, attributes : QueueAttributeMap? = nil, tags : TagMap? = nil)
@@ -45,9 +48,10 @@ module Aws::SQS::API
       attributes: attributes,
       tags: tags,
     )
-    params  = build_params(action: "CreateQueue", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: CreateQueueResult)
+    params   = build_params(action: "CreateQueue", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: CreateQueueResult)
+    CreateQueueResponse(CreateQueueRequest, CreateQueueResult).new(input, response)
   end
 
   def delete_message(queue_url : String, receipt_handle : String)
@@ -55,9 +59,10 @@ module Aws::SQS::API
       queue_url: queue_url,
       receipt_handle: receipt_handle,
     )
-    params  = build_params(action: "DeleteMessage", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "DeleteMessage", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    DeleteMessageResponse(DeleteMessageRequest, DefaultResult).new(input, response)
   end
 
   def delete_message_batch(queue_url : String, entries : DeleteMessageBatchRequestEntryList)
@@ -65,18 +70,20 @@ module Aws::SQS::API
       queue_url: queue_url,
       entries: entries,
     )
-    params  = build_params(action: "DeleteMessageBatch", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DeleteMessageBatchResult)
+    params   = build_params(action: "DeleteMessageBatch", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DeleteMessageBatchResult)
+    DeleteMessageBatchResponse(DeleteMessageBatchRequest, DeleteMessageBatchResult).new(input, response)
   end
 
   def delete_queue(queue_url : String)
     input = DeleteQueueRequest.new(
       queue_url: queue_url,
     )
-    params  = build_params(action: "DeleteQueue", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "DeleteQueue", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    DeleteQueueResponse(DeleteQueueRequest, DefaultResult).new(input, response)
   end
 
   def get_queue_attributes(queue_url : String, attribute_names : AttributeNameList? = nil)
@@ -84,9 +91,10 @@ module Aws::SQS::API
       queue_url: queue_url,
       attribute_names: attribute_names,
     )
-    params  = build_params(action: "GetQueueAttributes", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: GetQueueAttributesResult)
+    params   = build_params(action: "GetQueueAttributes", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: GetQueueAttributesResult)
+    GetQueueAttributesResponse(GetQueueAttributesRequest, GetQueueAttributesResult).new(input, response)
   end
 
   def get_queue_url(queue_name : String, queue_owner_aws_account_id : String? = nil)
@@ -94,9 +102,10 @@ module Aws::SQS::API
       queue_name: queue_name,
       queue_owner_aws_account_id: queue_owner_aws_account_id,
     )
-    params  = build_params(action: "GetQueueUrl", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: GetQueueUrlResult)
+    params   = build_params(action: "GetQueueUrl", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: GetQueueUrlResult)
+    GetQueueUrlResponse(GetQueueUrlRequest, GetQueueUrlResult).new(input, response)
   end
 
   def list_dead_letter_source_queues(queue_url : String, next_token : String? = nil, max_results : Int32? = nil)
@@ -105,18 +114,20 @@ module Aws::SQS::API
       next_token: next_token,
       max_results: max_results,
     )
-    params  = build_params(action: "ListDeadLetterSourceQueues", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: ListDeadLetterSourceQueuesResult)
+    params   = build_params(action: "ListDeadLetterSourceQueues", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: ListDeadLetterSourceQueuesResult)
+    ListDeadLetterSourceQueuesResponse(ListDeadLetterSourceQueuesRequest, ListDeadLetterSourceQueuesResult).new(input, response)
   end
 
   def list_queue_tags(queue_url : String)
     input = ListQueueTagsRequest.new(
       queue_url: queue_url,
     )
-    params  = build_params(action: "ListQueueTags", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: ListQueueTagsResult)
+    params   = build_params(action: "ListQueueTags", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: ListQueueTagsResult)
+    ListQueueTagsResponse(ListQueueTagsRequest, ListQueueTagsResult).new(input, response)
   end
 
   def list_queues(queue_name_prefix : String? = nil, next_token : String? = nil, max_results : Int32? = nil)
@@ -125,18 +136,20 @@ module Aws::SQS::API
       next_token: next_token,
       max_results: max_results,
     )
-    params  = build_params(action: "ListQueues", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: ListQueuesResult)
+    params   = build_params(action: "ListQueues", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: ListQueuesResult)
+    ListQueuesResponse(ListQueuesRequest, ListQueuesResult).new(input, response)
   end
 
   def purge_queue(queue_url : String)
     input = PurgeQueueRequest.new(
       queue_url: queue_url,
     )
-    params  = build_params(action: "PurgeQueue", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "PurgeQueue", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    PurgeQueueResponse(PurgeQueueRequest, DefaultResult).new(input, response)
   end
 
   def receive_message(queue_url : String, attribute_names : AttributeNameList? = nil, message_attribute_names : MessageAttributeNameList? = nil, max_number_of_messages : Int32? = nil, visibility_timeout : Int32? = nil, wait_time_seconds : Int32? = nil, receive_request_attempt_id : String? = nil)
@@ -149,9 +162,10 @@ module Aws::SQS::API
       wait_time_seconds: wait_time_seconds,
       receive_request_attempt_id: receive_request_attempt_id,
     )
-    params  = build_params(action: "ReceiveMessage", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: ReceiveMessageResult)
+    params   = build_params(action: "ReceiveMessage", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: ReceiveMessageResult)
+    ReceiveMessageResponse(ReceiveMessageRequest, ReceiveMessageResult).new(input, response)
   end
 
   def remove_permission(queue_url : String, label : String)
@@ -159,9 +173,10 @@ module Aws::SQS::API
       queue_url: queue_url,
       label: label,
     )
-    params  = build_params(action: "RemovePermission", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "RemovePermission", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    RemovePermissionResponse(RemovePermissionRequest, DefaultResult).new(input, response)
   end
 
   def send_message(queue_url : String, message_body : String, delay_seconds : Int32? = nil, message_attributes : MessageBodyAttributeMap? = nil, message_system_attributes : MessageBodySystemAttributeMap? = nil, message_deduplication_id : String? = nil, message_group_id : String? = nil)
@@ -174,9 +189,10 @@ module Aws::SQS::API
       message_deduplication_id: message_deduplication_id,
       message_group_id: message_group_id,
     )
-    params  = build_params(action: "SendMessage", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: SendMessageResult)
+    params   = build_params(action: "SendMessage", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: SendMessageResult)
+    SendMessageResponse(SendMessageRequest, SendMessageResult).new(input, response)
   end
 
   def send_message_batch(queue_url : String, entries : SendMessageBatchRequestEntryList)
@@ -184,9 +200,10 @@ module Aws::SQS::API
       queue_url: queue_url,
       entries: entries,
     )
-    params  = build_params(action: "SendMessageBatch", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: SendMessageBatchResult)
+    params   = build_params(action: "SendMessageBatch", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: SendMessageBatchResult)
+    SendMessageBatchResponse(SendMessageBatchRequest, SendMessageBatchResult).new(input, response)
   end
 
   def set_queue_attributes(queue_url : String, attributes : QueueAttributeMap)
@@ -194,9 +211,10 @@ module Aws::SQS::API
       queue_url: queue_url,
       attributes: attributes,
     )
-    params  = build_params(action: "SetQueueAttributes", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "SetQueueAttributes", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    SetQueueAttributesResponse(SetQueueAttributesRequest, DefaultResult).new(input, response)
   end
 
   def tag_queue(queue_url : String, tags : TagMap)
@@ -204,9 +222,10 @@ module Aws::SQS::API
       queue_url: queue_url,
       tags: tags,
     )
-    params  = build_params(action: "TagQueue", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "TagQueue", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    TagQueueResponse(TagQueueRequest, DefaultResult).new(input, response)
   end
 
   def untag_queue(queue_url : String, tag_keys : TagKeyList)
@@ -214,9 +233,10 @@ module Aws::SQS::API
       queue_url: queue_url,
       tag_keys: tag_keys,
     )
-    params  = build_params(action: "UntagQueue", version: "2012-11-05", input: input)
-    request = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
-    execute(request, input, output: DefaultResult)
+    params   = build_params(action: "UntagQueue", version: "2012-11-05", input: input)
+    request  = build_request("POST", "/", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, params: params)
+    response = execute(request, input, output: DefaultResult)
+    UntagQueueResponse(UntagQueueRequest, DefaultResult).new(input, response)
   end
 
 end

@@ -14,6 +14,8 @@ require "json"
 require "log"
 
 NAME2SHAPE = Hash(String, Codegen::Shape).new
+OUTPUT_TYPE_NAMES = Hash(String, String).new
+
 CRYSTAL_TYPE_MAPPING = {
   "BoxedInteger" => "Int32",
 }
@@ -349,12 +351,17 @@ class Codegen
     @shapes = @root.shapes
     @native_types = Hash(String, String).new
     @service_id = (@root.metadata["serviceId"]? || @service_name.capitalize).gsub(/\s+/, "")
+    @api_version = @root.metadata["apiVersion"] # "apiVersion":"2012-11-05",
 
     # register shape maps in constant for global accesss
     NAME2SHAPE.merge!(shapes)
 
-    # "apiVersion":"2012-11-05",
-    @api_version = @root.metadata["apiVersion"]
+    # register output type names
+    operations.each do |name, op|
+      if name = op.output.try{|hash| hash["shape"]?}
+        OUTPUT_TYPE_NAMES[name] = name
+      end
+    end
   end
 
   def generate
@@ -390,6 +397,18 @@ class Codegen
     data = String.build do |s|
       s.puts do_not_edit_message
       s.puts
+      s.puts %Q|module Aws::#{@service_id}|
+      s.puts %Q|  class Response(I, R)|
+      s.puts %Q|    getter input : I|
+      s.puts %Q|    getter response : HTTP::Client::Response|
+      s.puts %Q|    delegate status, body, to: @http_response|
+      s.puts
+      s.puts %Q|    def initialize(@input, @response)|
+      s.puts %Q|    end|
+      s.puts %Q|  end|
+      s.puts %Q|end|
+      s.puts
+
       s.puts %Q|module Aws::#{@service_id}::Types|
 
       s.puts %Q|  module Input|
@@ -398,6 +417,10 @@ class Codegen
       s.puts
       
       s.puts %Q|  module InputList|
+      s.puts %Q|  end|
+      s.puts
+
+      s.puts %Q|  module Output|
       s.puts %Q|  end|
       s.puts
 
@@ -422,6 +445,15 @@ class Codegen
           raise err
         end
       end
+
+      operations.each do |name, op|
+        input_shape_name = resolve_type(op.input)
+        response_type    = input_shape_name.sub(/Request$/, "") + "Response"
+
+        s.puts %Q|  class #{response_type}(I, R) < Response(I, R)|
+        s.puts %Q|  end|
+      end
+
       s.puts %Q|end|
     end
   end
@@ -474,7 +506,13 @@ class Codegen
       end
     end
 
-    if name.ends_with?("Request")
+    if OUTPUT_TYPE_NAMES[name]?
+      s.puts     %Q|  do|
+      s.puts
+      s.puts     %Q|    include Output|
+      s.puts     %Q|  end|
+    
+    elsif name.ends_with?("Request")
       s.puts     %Q|  do|
       s.puts
       s.puts     %Q|    include Input|
@@ -508,10 +546,11 @@ class Codegen
         http_method = op.http["method"].to_s.upcase
         request_uri = op.http["requestUri"]
 
-        input_shape_name = resolve_type(op.input)
-        input_shape = shapes[input_shape_name]? || raise ArgumentError.new("no shapes [#{input_shape_name}]")
-        method_arg  = input_shape.map(&.to_method_arg).join(", ")
-        output_type = op.output.try{|hash| hash["shape"]?} || DEFAULT_OUTPUT_TYPE
+        input_type    = resolve_type(op.input)
+        input_shape   = shapes[input_type]? || raise ArgumentError.new("no shapes [ #{input_type}]")
+        method_arg    = input_shape.map(&.to_method_arg).join(", ")
+        output_type   = op.output.try{|hash| hash["shape"]?} || DEFAULT_OUTPUT_TYPE
+        response_type = input_type.sub(/Request$/, "") + "Response"
 
         case http_method
         when "POST", "PUT"
@@ -521,14 +560,15 @@ class Codegen
         end
         
         s.puts %Q|  def #{method_name}(#{method_arg})|
-        s.puts %Q|    input = #{input_shape_name}.new(|
+        s.puts %Q|    input = #{input_type}.new(|
         input_shape.each do |a|
           s.puts %Q|      #{a.name}: #{a.name},|
         end
         s.puts %Q|    )|
-        s.puts %Q|    params  = build_params(action: "#{name}", version: "#{api_version}", input: input)|
-        s.puts %Q|    request = build_request("#{http_method}", "#{request_uri}", headers: #{headers}, params: params)|
-        s.puts %Q|    execute(request, input, output: #{output_type})|
+        s.puts %Q|    params   = build_params(action: "#{name}", version: "#{api_version}", input: input)|
+        s.puts %Q|    request  = build_request("#{http_method}", "#{request_uri}", headers: #{headers}, params: params)|
+        s.puts %Q|    response = execute(request, input, output: #{output_type})|
+        s.puts %Q|    #{response_type}(#{input_type}, #{output_type}).new(input, response)|
         s.puts %Q|  end|
         s.puts
       end

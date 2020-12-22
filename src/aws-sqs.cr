@@ -1,4 +1,6 @@
 require "awscr-signer"
+require "var"
+
 require "./aws-sqs/**"
 
 module Aws::SQS
