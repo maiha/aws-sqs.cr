@@ -30,7 +30,7 @@ module Aws
         return http_request
       end
 
-      def execute(http_request, user_request : Types::Input)
+      def execute(http_request, user_request : Types::Input, output : T.class) forall T
         http.exec(http_request)
       end
 

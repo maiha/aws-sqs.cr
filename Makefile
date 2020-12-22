@@ -10,11 +10,11 @@ AWS_SDK_GO=https://github.com/aws/aws-sdk-go.git
 
 .PHONY: gen
 gen:
-	@make gen/gen-code
+	@make gen/codegen
 	@make gen/aws-sdk-go
-	@make gen/code -j 8
+	@make gen/code
 
-gen/gen-code: gen/gen-code.cr
+gen/codegen: gen/codegen.cr
 	@crystal build -o "$@" "$<"
 
 gen/aws-sdk-go:
@@ -26,15 +26,14 @@ gen/aws-sdk-go:
 _AWS_SERVICES=$(sort $(notdir $(shell find gen/aws-sdk-go/models/apis/ -maxdepth 1 -type d | grep -E '/([a-z0-9]+)$$' )))
 gen/code: $(addprefix gen/code/,$(_AWS_SERVICES))
 
-gen/code/%: gen/aws-sdk-go
-	@mkdir -p "src/aws-$*"
+gen/code/%:
 	@mkdir -p "gen/logs"
-	./gen/gen-code "$<" "$*" > "gen/logs/$*.log" 2>&1 || make "gen/fail/aws-$*"
+	./gen/codegen "$*" "gen/aws-sdk-go/models/apis/$*" "gen/src/$*" > "gen/logs/$*.log" 2>&1 && make "gen/deploy/$*"
 
-gen/fail/%:
-	@rm -rf      "gen/failed/$*"
-	@mkdir -p    "gen/failed/$*"
-	@mv "src/$*" "gen/failed/"
+gen/deploy/%:
+	@mkdir -p "src/aws-$*"
+	@rm -rf   "src/aws-$*/gen"
+	@mv "gen/src/$*" "src/aws-$*/gen"
 
 ######################################################################
 ### Versioning

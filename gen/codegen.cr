@@ -9,13 +9,15 @@
 # 57 "structure"
 # ```
 
+require "file_utils"
 require "json"
 require "log"
 
-NAME2SHAPE = Hash(String, GenCode::Shape).new
+NAME2SHAPE = Hash(String, Codegen::Shape).new
 CRYSTAL_TYPE_MAPPING = {
   "BoxedInteger" => "Int32",
 }
+DEFAULT_OUTPUT_TYPE = "DefaultResult"
 
 def resolve_type(name : String) : String
   if type = CRYSTAL_TYPE_MAPPING[name]?
@@ -26,7 +28,7 @@ def resolve_type(name : String) : String
     case shape
     when .is_enum?
       return name
-    when GenCode::NativeType
+    when Codegen::NativeType
       return shape.native_type
     end
   end
@@ -43,7 +45,7 @@ def resolve_type(name) : String
   raise "BUG: resolve_type is called without String. [#{name.inspect}]"
 end
 
-class GenCode
+class Codegen
   module NativeType
     macro included
       def native_type : String
@@ -342,7 +344,7 @@ class GenCode
 
   delegate operations, shapes, to: root
 
-  def initialize(@service_name : String, @json_path : String)
+  def initialize(@service_name : String, @json_path : String, @output_dir : String)
     @root   = Root.from_json(File.read(@json_path))
     @shapes = @root.shapes
     @native_types = Hash(String, String).new
@@ -351,12 +353,22 @@ class GenCode
     # register shape maps in constant for global accesss
     NAME2SHAPE.merge!(shapes)
 
-    # json_path: "aws-sdk-go/models/apis/sqs/2012-11-05/api-2.json"
-    case @json_path
-    when %r{/#{@service_name}/(\d{4}-\d{2}-\d{2})/}
-      @api_version = $1
-    else
-      raise ArgumentError.new("The json_path doesn't contain VERSION string. [#{@json_path}]")
+    # "apiVersion":"2012-11-05",
+    @api_version = @root.metadata["apiVersion"]
+  end
+
+  def generate
+    # Delete auto generated files.
+    FileUtils.rm_rf(@output_dir)
+    FileUtils.mkdir_p(@output_dir)
+
+    # generate types.cr
+    Dir.cd(@output_dir) do
+      File.write("api.cr", build_code_api)
+      Log.info { "Created api.cr" }
+
+      File.write("types.cr", build_code_types)
+      Log.info { "Created types.cr" }
     end
   end
 
@@ -374,9 +386,7 @@ class GenCode
       EOF
   end
 
-  def gen_types
-    path = "src/aws-#{@service_name}/types.cr"
-
+  private def build_code_types : String
     data = String.build do |s|
       s.puts do_not_edit_message
       s.puts
@@ -414,12 +424,9 @@ class GenCode
       end
       s.puts %Q|end|
     end
-
-    File.write(path, data)
-    Log.info { "Created #{path}" }
   end
 
-  def gen_type_enum(s, name, shape)
+  private def gen_type_enum(s, name, shape)
     s.puts   %Q|  enum #{name}|
     shape.each do |f|
       s.puts %Q|    #{f.name}|
@@ -428,7 +435,7 @@ class GenCode
     s.puts
   end
 
-  def gen_type_list(s, name, shape)
+  private def gen_type_list(s, name, shape)
     shape.each do |f|
       # f: @param_key="AttributeName", @name="attribute_name", @type="QueueAttributeName", @required=true
       # ```
@@ -450,7 +457,7 @@ class GenCode
     end
   end
 
-  def gen_type_default(s, name, shape)
+  private def gen_type_default(s, name, shape)
     return if name =~ /^[a-z]/
 
     s.print %Q|  record #{name}|
@@ -484,10 +491,8 @@ class GenCode
     end
   end
 
-  def gen_api
-    path = "src/aws-#{@service_name}/api.cr"
-
-    data = String.build do |s|
+  private def build_code_api : String
+    String.build do |s|
       s.puts do_not_edit_message
       s.puts
       s.puts %Q|require "./types"|
@@ -506,6 +511,7 @@ class GenCode
         input_shape_name = resolve_type(op.input)
         input_shape = shapes[input_shape_name]? || raise ArgumentError.new("no shapes [#{input_shape_name}]")
         method_arg  = input_shape.map(&.to_method_arg).join(", ")
+        output_type = op.output.try{|hash| hash["shape"]?} || DEFAULT_OUTPUT_TYPE
 
         case http_method
         when "POST", "PUT"
@@ -522,18 +528,25 @@ class GenCode
         s.puts %Q|    )|
         s.puts %Q|    params  = build_params(action: "#{name}", version: "#{api_version}", input: input)|
         s.puts %Q|    request = build_request("#{http_method}", "#{request_uri}", headers: #{headers}, params: params)|
-        s.puts %Q|    execute(request, input)|
+        s.puts %Q|    execute(request, input, output: #{output_type})|
         s.puts %Q|  end|
         s.puts
       end
 
       s.puts %Q|end|
     end
-
-    File.write(path, data)
-    Log.info { "Created #{path}" }
   end
 end
+
+######################################################################
+### codegen <SERVICE_NAME> <API_DIR> <OUTPUT_DIR>
+### codegen "sqs" gen/aws-sdk-go/models/apis" "gen/src"
+
+service_name = ARGV.shift? || raise ArgumentError.new("arg1: missing <SERVICE_NAME>")
+api_dir      = ARGV.shift? || raise ArgumentError.new("arg2: missing <API_DIR>")
+output_dir   = ARGV.shift? || raise ArgumentError.new("arg3: missing <OUTPUT_DIR>")
+json_path    = `find #{api_dir}/ -name 'api*.json' | tail -1`.chomp
+# gen/aws-sdk-go/models/apis/sqs/2012-11-05/api-2.json
 
 Log.setup do |c|
   # level = ENV["DEBUG"]? ? Log::Severity::Debug : Log::Severity::Info
@@ -541,12 +554,5 @@ Log.setup do |c|
   c.bind "*", level, Log::IOBackend.new
 end
 
-aws_go_path  = ARGV.shift? || raise ArgumentError.new("arg1: missing aws-go path")
-service_name = ARGV.shift? || raise ArgumentError.new("arg1: missing service name")
-json_path = `find #{aws_go_path}/models/apis/#{service_name} -name 'api*.json' | head -1`.chomp
-# gen/aws-sdk-go/models/apis/sqs/2012-11-05/api-2.json
-
-gen = GenCode.new(service_name, json_path)
-gen.gen_types
-gen.gen_api
-
+gen = Codegen.new(service_name: service_name, json_path: json_path, output_dir: output_dir)
+gen.generate

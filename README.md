@@ -1,6 +1,7 @@
 # aws-sqs
 
-aws-sqs is the unofficial AWS SQS library for the Crystal.
+aws-sqs is the **unofficial** AWS SQS library for the Crystal.
+* Almost all of the API code is automatically generated from `api-*.json` in [aws-sdk-go](https://github.com/aws/aws-sdk-go).
 
 ## Installation
 

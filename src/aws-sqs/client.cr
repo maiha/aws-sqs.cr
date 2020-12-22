@@ -1,4 +1,4 @@
-require "./handy_api"
+require "./api"
 require "./execute"
 
 module Aws
@@ -17,7 +17,6 @@ module Aws
       end
 
       include API
-      include HandyAPI
       include Execute
     end
   end
