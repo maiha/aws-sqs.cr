@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -eu
+
+docker-compose up -d
+docker-compose exec test shards build
+docker-compose exec test crystal spec -v --fail-fast
+
+echo "Successfully finished. Please close containers manually."
+echo "  docker-compose down -v"

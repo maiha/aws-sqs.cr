@@ -1,0 +1,23 @@
+version: "3"
+services:
+  localstack:
+    image: localstack/localstack:0.12.3
+    environment:
+      SERVICES: sqs
+      DEFAULT_REGION: us-east-2
+      HOSTNAME_EXTERNAL: localstack
+    volumes:
+      - ./localstack:/docker-entrypoint-initaws.d
+    expose:
+      - "4566-4578"
+
+  test:
+    image: crystallang/crystal:0.35.1-alpine
+    volumes:
+      - ./shard.yml:/v/shard.yml:ro
+      - ./src:/v/src:ro
+      - ./test:/v/spec:ro
+    working_dir: /v
+    depends_on:
+      - localstack
+    tty: true

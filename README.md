@@ -70,8 +70,22 @@ $ crystal samples/change_message_visibility.cr "https://.../MyQueue" "MbZj6wDWli
 
 ## Development
 
+Both tests must be passed before you can push to the repository or create a PR.
+
+##### unit test
+* using local crystal
+* target: `./spec/*`
+
 ```console
 $ crystal spec
+```
+
+##### integration test
+* using LocalStack in docker-compose
+* target: `./test/*`
+
+```console
+$ ./ci
 ```
 
 ## Contributing

@@ -34,11 +34,6 @@ module Aws
         http.exec(http_request)
       end
 
-      private def post(path, request)
-        body = request_body(request)
-        http.post("/#{queue_name}", headers: {"Content-Type" => "application/x-www-form-urlencoded"}, body: body)
-      end
-      
       # :nodoc:
       private def http
         Utils::Http.new(signer: @signer, service_name: SERVICE_NAME, region: @region, custom_endpoint: @endpoint)

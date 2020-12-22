@@ -62,26 +62,26 @@ class GenCode
     property shapes : Hash(String, Shape)
   end
 
-  #     "AddPermission": {
-  #       "name": "AddPermission",
-  #       "http": {
-  #         "method": "POST",
-  #         "requestUri": "/"
+  #     "ReceiveMessage":{
+  #       "name":"ReceiveMessage",
+  #       "http":{
+  #         "method":"POST",
+  #         "requestUri":"/"
   #       },
-  #       "input": {
-  #         "shape": "AddPermissionRequest"
+  #       "input":{"shape":"ReceiveMessageRequest"},
+  #       "output":{
+  #         "shape":"ReceiveMessageResult",
+  #         "resultWrapper":"ReceiveMessageResult"
   #       },
-  #       "errors": [
-  #         {
-  #           "shape": "OverLimit"
-  #         }
+  #       "errors":[
+  #         {"shape":"OverLimit"}
   #       ]
-  #     },
   class Operation
     include JSON::Serializable
-    property name : String
-    property http : Hash(String, String | Int64)
-    property input : Hash(String, String)
+    property name   : String
+    property http   : Hash(String, String | Int64)
+    property input  : Hash(String, String)
+    property output : Hash(String, String)?
   end
 
   class Field
