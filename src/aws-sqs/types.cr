@@ -1,11 +1,53 @@
 require "./gen/types"
 
+module Aws::SQS
+  class Response(I, R)
+    var xml : Utils::XML = Utils::XML.new(response.body)
+  end
+end
+
 module Aws::SQS::Types
   record DefaultResult do
     include Output
   end
 
-  class ReceiveMessageResponse(I, R)
+  class GetQueueAttributesResponse(I, R) < Response(I, R)
+    # <?xml version="1.0" encoding="UTF-8"?>
+    # <GetQueueAttributesResponse>
+    #    <GetQueueAttributesResult>
+    #       <Attribute>
+    #          <Name>QueueArn</Name>
+    #          <Value>arn:aws:sqs:ap-northeast-1:000000000000:waiting.fifo</Value>
+    #       </Attribute>
+    #       <Attribute>
+    #          <Name>ApproximateNumberOfMessages</Name>
+    #          <Value>4</Value>
+    #       </Attribute>
+    #       <Attribute>
+    #          <Name>MaximumMessageSize</Name>
+    #          <Value>262144</Value>
+    #       </Attribute>
+    #    </GetQueueAttributesResult>
+    #    <ResponseMetadata>
+    #       <RequestId>TEH441QWJZY6W9S6NJG3LF5KU89AAYS4R9Y6FCC66Z3O8GKH1UPB</RequestId>
+    #    </ResponseMetadata>
+    # </GetQueueAttributesResponse>
+
+    def attributes
+      map = Hash(QueueAttributeName, String).new
+      xml.array("//GetQueueAttributesResponse/GetQueueAttributesResult/Attribute") do |node|
+
+        key = QueueAttributeName.parse(node.string("Name"))
+        val = node.string("Value")
+        map[key] = val
+      end
+
+      return map
+    end
+
+  end
+
+  class ReceiveMessageResponse(I, R) < Response(I, R)
     # <?xml version="1.0" encoding="UTF-8"?>
     # <ReceiveMessageResponse>
     #    <ReceiveMessageResult>
@@ -41,8 +83,6 @@ module Aws::SQS::Types
     #    </ResponseMetadata>
     # </ReceiveMessageResponse>
 
-    var xml : Utils::XML = Utils::XML.new(response.body)
-
     def messages
       list = Array(Message).new
 
@@ -64,5 +104,4 @@ module Aws::SQS::Types
     end
   end
 end
-
-
+  

@@ -23,7 +23,7 @@ end
 
 attribute_names = ARGV
 if attribute_names.empty?
-  attribute_names = ["QueueArn", "ApproximateNumberOfMessages", "MaximumMessageSize"]
+  attribute_names = ["ApproximateNumberOfMessages", "MaximumMessageSize"]
 end    
 
 if queue_url 
@@ -34,7 +34,8 @@ if queue_url
   client = Aws::SQS::Client.new(region: region, aws_access_key: access, aws_secret_key: secret)
 
   res = client.get_queue_attributes(queue_url: queue_url, attribute_names: attribute_names)
-  p res
+  p res.attributes
+  # => {ApproximateNumberOfMessages => "4", MaximumMessageSize => "262144"}
 else
   puts USAGE
 end

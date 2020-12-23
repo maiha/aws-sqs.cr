@@ -15,6 +15,7 @@
 
 require "file_utils"
 require "json"
+require "var"
 require "log"
 
 NAME2SHAPE = Hash(String, Codegen::Shape).new
@@ -22,6 +23,8 @@ OUTPUT_TYPE_NAMES = Hash(String, String).new
 
 CRYSTAL_TYPE_MAPPING = {
   "BoxedInteger" => "Int32",
+#  "Name"         => "String",   # TODO: It seems "Name" is not resolved in shapes.
+#  "Value"        => "String",   # TODO: It seems "Value" is not resolved in shapes.
 }
 DEFAULT_OUTPUT_TYPE = "DefaultResult"
 
@@ -110,6 +113,28 @@ class Codegen
       end
     end
   end
+
+  class ShapeParser
+    #      "key": {
+    #        "shape": "String",
+    #        "locationName": "Name"
+    #      },
+    var shape_name    : String = raise ArgumentError.new("ShapeParser: shape is missing: {@hash.inspect}")
+    var location_name : String = raise ArgumentError.new("ShapeParser: locationName is missing: {@hash.inspect}")
+
+    def initialize(@hash : Hash(String, String))
+      @shape_name    = @hash["shape"]?
+      @location_name = @hash["locationName"]?
+    end
+    
+    def param_key
+      location_name? || shape_name
+    end
+
+    def crystal_type : String
+      resolve_type(shape_name)
+    end
+  end
   
   #   "ActionNameList": {
   #     "type": "list",
@@ -142,6 +167,7 @@ class Codegen
     }
     property type : String
     property flattened : Bool?
+    property locationName : String?
     
     include Enumerable(Field)
 
@@ -226,19 +252,50 @@ class Codegen
   end
 
   class ShapeMap < Shape
-    #      "type": "map",
-    #      "key": {
-    #        "shape": "String",
+    #    "QueueAttributeMap":{
+    #      "type":"map",
+    #      "key":{
+    #        "shape":"QueueAttributeName",
     #        "locationName": "Name"
     #      },
     #      "value": {
-    #        "shape": "MessageAttributeValue",
+    #        "shape": "String",
     #        "locationName": "Value"
     #      },
-    #      "flattened": true
+    #      "flattened": true,
+    #      "locationName":"Attribute"
     #    },
     property key : Hash(String, String)
     property value : Hash(String, String)
+
+    def to_code_type(name : String)
+      key_ref = ShapeParser.new(key)
+      val_ref = ShapeParser.new(value)
+      type = "Hash(%s, %s)" % [key_ref.crystal_type, val_ref.crystal_type]
+
+      # aws sqs create-queue --queue-name queue --tags foo=bar
+      # => "Tag.1.Key=foo&Tag.1.Value=bar"
+
+      paramName = locationName || raise "BUG: locationName is missing"  # "Tag"
+      keyName   = key_ref.location_name # "Key"
+      valName   = val_ref.location_name # "Value"
+
+      String.build do |s|
+        s.puts %Q|  record #{name},|
+        s.puts %Q|    map : #{type} do|
+        s.puts
+        s.puts %Q|    include Input|
+
+        s.puts %Q|    def set_params(params : HTTP::Params, serializer)|
+        s.puts %Q[      map.each do |key, val|]
+        s.puts %Q|        serializer.set_params(params, serializer, name: "#{paramName}.\#{i+1}.#{keyName}", value: key)|
+        s.puts %Q|        serializer.set_params(params, serializer, name: "#{paramName}.\#{i+1}.#{valName}", value: val)|
+        s.puts %Q|      end}|
+        s.puts %Q|    end|
+
+        s.puts %Q|  end|
+      end
+    end
   end
 
   class ShapeList < Shape
@@ -259,13 +316,11 @@ class Codegen
     #      property flattended : Bool
 
     def each(&block : Field -> _)
-      hash = member
-      name = hash["locationName"]? || hash["shape"]? || raise ArgumentError.new("locationName is missing: hash=#{hash.inspect}")
-      type = resolve_type(hash["shape"])
+      ref = ShapeParser.new(member)
       field = Field.new(
-        param_key: name,
-        name: name.underscore,
-        type: type,
+        param_key: ref.param_key,
+        name: ref.param_key.underscore,
+        type: ref.crystal_type,
         required: true,
         flattened: !!flattened,
       )
@@ -321,7 +376,7 @@ class Codegen
     end
   end
 
-  def self.inspect(root : Root)
+  def inspect
     puts "operations: %d" % root.operations.size
     puts "shapes: %d" % root.shapes.size
 
@@ -331,11 +386,11 @@ class Codegen
     end
 
     puts "--- shapes ------------------------------------------------------------"
-    shown_types = Set(String).new
+    once = Set(String).new
     root.shapes.each_with_index do |(name, shape)|
       shape.type
-      next if showntypes.includes?(shape.type)
-      shown_types << shape.type
+      next if once.includes?(shape.type)
+      once << shape.type
       p shape
     end
   end
@@ -440,6 +495,8 @@ class Codegen
             gen_type_enum(s, name, shape)
           when ShapeList
             gen_type_list(s, name, shape)
+#          when ShapeMap
+#            s.puts shape.to_code_type(name)
           else
             gen_type_default(s, name, shape)
           end
@@ -598,4 +655,8 @@ Log.setup do |c|
 end
 
 gen = Codegen.new(service_name: service_name, service_json: service_json, output_dir: output_dir)
+if ENV["GEN_INSPECT"]?
+  gen.inspect
+  exit 1                        # cause error to avoid deployment
+end
 gen.generate
