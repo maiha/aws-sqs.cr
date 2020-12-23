@@ -44,9 +44,31 @@ module Aws::SQS::Types
 
       return map
     end
-
   end
 
+  class ListQueuesResponse(I, R) < Response(I, R)
+    # <?xml version="1.0" encoding="UTF-8"?>
+    # <ListQueuesResponse>
+    #    <ListQueuesResult>
+    #       <QueueUrl>http://localhost:4566/000000000000/waiting.fifo</QueueUrl>
+    #       <QueueUrl>http://localhost:4566/000000000000/lookup.fifo</QueueUrl>
+    #    </ListQueuesResult>
+    #    <ResponseMetadata>
+    #       <RequestId>OQYQ577LPLORPZTOYIS8PWH5WSKYXMXWLHJT52PW6B2CESJPLL4D</RequestId>
+    #    </ResponseMetadata>
+    # </ListQueuesResponse>
+
+    def queue_urls
+      urls = Array(String).new
+
+      xml.array("//ListQueuesResponse/ListQueuesResult/QueueUrl") do |node|
+        urls << node.text
+      end
+
+      return urls
+    end
+  end
+  
   class ReceiveMessageResponse(I, R) < Response(I, R)
     # <?xml version="1.0" encoding="UTF-8"?>
     # <ReceiveMessageResponse>

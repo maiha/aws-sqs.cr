@@ -16,6 +16,10 @@ module Aws::SQS
           end
         end
 
+        def text
+          @node.inner_text
+        end
+
         # :nodoc:
         private def build_path(path)
           anywhere = false

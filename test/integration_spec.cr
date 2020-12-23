@@ -15,6 +15,11 @@ module LocalStack
       # AWS.SimpleQueueService.NonExistentQueue: The specified queue does not exist for this wsdl version. (Aws::SQS::Utils::Http::ServerError)
     end
 
+    it "lists" do
+      res = client.list_queues
+      res.queue_urls.should eq([QUEUE_URL])
+    end
+
     it "produces" do
       res = client.send_message(queue_url: QUEUE_URL, message_body: "Hello", message_group_id: "g1")
       res.status.should eq(HTTP::Status::OK)
