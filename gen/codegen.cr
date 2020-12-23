@@ -1,12 +1,16 @@
 # ```console
-# $ jq '.shapes[].type' api-2.json | sort | uniq -c
-# 1 "blob"
-# 1 "boolean"
-# 2 "integer"
-# 16 "list"
-# 5 "map"
-# 8 "string"
-# 57 "structure"
+# $ (find botocore/data -name 'service*.json' | xargs jq '.shapes[].type' ) | sort | uniq -c | sort -n
+#     38 "float"
+#    101 "blob"
+#    171 "double"
+#    328 "long"
+#    400 "timestamp"
+#    456 "map"
+#    572 "boolean"
+#   1424 "integer"
+#   7317 "list"
+#  11482 "string"
+#  36526 "structure"
 # ```
 
 require "file_utils"
@@ -346,8 +350,8 @@ class Codegen
 
   delegate operations, shapes, to: root
 
-  def initialize(@service_name : String, @json_path : String, @output_dir : String)
-    @root   = Root.from_json(File.read(@json_path))
+  def initialize(@service_name : String, @service_json : String, @output_dir : String)
+    @root   = Root.from_json(File.read(@service_json))
     @shapes = @root.shapes
     @native_types = Hash(String, String).new
     @service_id = (@root.metadata["serviceId"]? || @service_name.capitalize).gsub(/\s+/, "")
@@ -401,7 +405,7 @@ class Codegen
       s.puts %Q|  class Response(I, R)|
       s.puts %Q|    getter input : I|
       s.puts %Q|    getter response : HTTP::Client::Response|
-      s.puts %Q|    delegate status, body, to: @http_response|
+      s.puts %Q|    delegate status, body, to: @response|
       s.puts
       s.puts %Q|    def initialize(@input, @response)|
       s.puts %Q|    end|
@@ -579,13 +583,12 @@ class Codegen
 end
 
 ######################################################################
-### codegen <SERVICE_NAME> <API_DIR> <OUTPUT_DIR>
-### codegen "sqs" gen/aws-sdk-go/models/apis" "gen/src"
+### codegen <SERVICE_NAME> <SERVICE_JSON> <OUTPUT_DIR>
+### codegen "sqs" "gen/boto/botocore/data/sqs/2012-11-05/service-2.json" "gen/src"
 
 service_name = ARGV.shift? || raise ArgumentError.new("arg1: missing <SERVICE_NAME>")
-api_dir      = ARGV.shift? || raise ArgumentError.new("arg2: missing <API_DIR>")
+service_json = ARGV.shift? || raise ArgumentError.new("arg2: missing <SERVICE_JSON>")
 output_dir   = ARGV.shift? || raise ArgumentError.new("arg3: missing <OUTPUT_DIR>")
-json_path    = `find #{api_dir}/ -name 'api*.json' | tail -1`.chomp
 # gen/aws-sdk-go/models/apis/sqs/2012-11-05/api-2.json
 
 Log.setup do |c|
@@ -594,5 +597,5 @@ Log.setup do |c|
   c.bind "*", level, Log::IOBackend.new
 end
 
-gen = Codegen.new(service_name: service_name, json_path: json_path, output_dir: output_dir)
+gen = Codegen.new(service_name: service_name, service_json: service_json, output_dir: output_dir)
 gen.generate

@@ -1,7 +1,7 @@
 # aws-sqs
 
 aws-sqs is the **unofficial** AWS SQS library for the Crystal.
-* Almost all of the API code is automatically generated from `api-*.json` in [aws-sdk-go](https://github.com/aws/aws-sdk-go).
+* Almost all of the API code is automatically generated from `service-*.json` in [botocore](https://github.com/boto/botocore).
 
 ## Installation
 
@@ -105,5 +105,5 @@ $ ./ci
 
 - [sdogruyol](https://github.com/sdogruyol) - This library derives basic codes about `Aws::SQS` from
   - https://github.com/sdogruyol/aws : [MIT License](https://github.com/sdogruyol/aws/blob/master/LICENSE)
-- [aws-sdk-go](https://github.com/aws/aws-sdk-go) - This library derives its AWS API schema from
-  - https://github.com/aws/aws-sdk-go : [Apache License 2.0](https://github.com/aws/aws-sdk-go/blob/master/LICENSE.txt)
+- [botocore](https://github.com/boto/botocore) - This library derives its AWS API schema from
+  - https://github.com/boto/botocore : [Apache License 2.0](https://github.com/boto/botocore/blob/develop/LICENSE.txt)

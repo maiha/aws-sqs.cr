@@ -6,29 +6,26 @@ export GNUMAKEFLAGS=--no-print-directory
 ### Generations
 
 AWS_SERVICES=sqs
-AWS_SDK_GO=https://github.com/aws/aws-sdk-go.git
 
 .PHONY: gen
 gen:
 	@make gen/codegen
-	@make gen/aws-sdk-go
-	@make gen/code
+	@make gen/boto
+	@make gen/botocode
 
 gen/codegen: gen/codegen.cr
 	@crystal build -o "$@" "$<"
 
-gen/aws-sdk-go:
+gen/boto:
 	rm -rf "$@.tmp"
-	git clone --filter=blob:none --sparse "$(AWS_SDK_GO)" --depth=1 "$@.tmp"
-	cd "$@.tmp" && git sparse-checkout set $(addprefix models/apis/,$(AWS_SERVICES))
+	git clone --filter=blob:none --sparse "https://github.com/boto/botocore.git" --depth=1 "$@.tmp"
+	cd "$@.tmp" && git sparse-checkout set $(addprefix botocore/data/,$(AWS_SERVICES))
 	mv "$@.tmp" "$@"
 
-_AWS_SERVICES=$(sort $(notdir $(shell find gen/aws-sdk-go/models/apis/ -maxdepth 1 -type d | grep -E '/([a-z0-9]+)$$' )))
-gen/code: $(addprefix gen/code/,$(_AWS_SERVICES))
-
-gen/code/%:
+gen/botocode: $(sort $(addprefix gen/botocode/,$(notdir $(shell find gen/boto/botocore/data/ -maxdepth 1 -type d | grep -E '/([a-z0-9]+)$$' ))))
+gen/botocode/%:
 	@mkdir -p "gen/logs"
-	./gen/codegen "$*" "gen/aws-sdk-go/models/apis/$*" "gen/src/$*" > "gen/logs/$*.log" 2>&1 && make "gen/deploy/$*"
+	./gen/codegen "$*" "`find gen/boto/botocore/data/$*/ -name 'service*.json' | tail -1`" "gen/src/$*" > "gen/logs/$*.log" 2>&1 && make "gen/deploy/$*"
 
 gen/deploy/%:
 	@mkdir -p "src/aws-$*"

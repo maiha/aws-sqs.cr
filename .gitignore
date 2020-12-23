@@ -5,7 +5,7 @@
 /shard.lock
 /.crystal-version
 /.crystal
-/gen/aws-sdk-go
+/gen/boto
 /gen/src
 /gen/codegen
 /gen/logs
