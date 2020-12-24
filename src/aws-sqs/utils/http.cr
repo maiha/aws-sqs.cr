@@ -18,11 +18,10 @@ module Aws::SQS
         end
       end
 
-      def initialize(@signer : Awscr::Signer::Signers::Interface,
-                     @service_name : String,
-                     @region : String,
-                     @custom_endpoint : String? = nil)
-        @http = HTTP::Client.new(endpoint)
+      def initialize(@signer : Awscr::Signer::Signers::Interface, endpoint : URI | String)
+        @endpoint = endpoint.is_a?(String) ? URI.parse(endpoint) : endpoint
+
+        @http = HTTP::Client.new(@endpoint)
 
         @http.before_request do |request|
           @signer.sign(request)
@@ -107,17 +106,6 @@ module Aws::SQS
         else
           raise ServerError.new("server error: #{response.status_code}")
         end
-      end
-
-      # :nodoc:
-      private def endpoint : URI
-        return URI.parse(@custom_endpoint.to_s) if @custom_endpoint
-        URI.parse("http://#{@service_name}.#{@region}.amazonaws.com")
-      end
-
-      # :nodoc:
-      private def default_endpoint : URI
-        URI.parse("http://#{@service_name}.amazonaws.com")
       end
     end
   end

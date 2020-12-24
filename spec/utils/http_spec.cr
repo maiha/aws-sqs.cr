@@ -6,6 +6,8 @@ module Aws::SQS
     SERVICE_NAME = "aws-dummy"
     REGION = "eu-west-1"
 
+    ENDPOINT = "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/"
+
     ERROR_BODY = <<-BODY
     <?xml version="1.0" encoding="UTF-8"?>
     <Error>
@@ -22,7 +24,7 @@ module Aws::SQS
           WebMock.stub(:get, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/")
             .to_return(status: 200)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           http.get("/").status_code.should eq 200
         end
@@ -31,7 +33,7 @@ module Aws::SQS
           WebMock.stub(:get, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/")
             .to_return(status: 200)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           http.get("/").status_code.should eq 200
         end
@@ -40,7 +42,7 @@ module Aws::SQS
           WebMock.stub(:get, "https://nyc3.digitaloceanspaces.com")
             .to_return(status: 200)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION, custom_endpoint: "https://nyc3.digitaloceanspaces.com")
+          http = Http.new(SIGNER, endpoint: "https://nyc3.digitaloceanspaces.com")
 
           http.get("/").status_code.should eq 200
         end
@@ -49,7 +51,7 @@ module Aws::SQS
           WebMock.stub(:get, "http://127.0.0.1:9000")
             .to_return(status: 200)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION, custom_endpoint: "http://127.0.0.1:9000")
+          http = Http.new(SIGNER, endpoint: "http://127.0.0.1:9000")
 
           http.get("/").status_code.should eq 200
         end
@@ -60,7 +62,7 @@ module Aws::SQS
           WebMock.stub(:get, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/sup?")
             .to_return(status: 404, body: ERROR_BODY)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError, "NoSuchKey: The resource you requested does not exist" do
             http.get("/sup")
@@ -71,7 +73,7 @@ module Aws::SQS
           WebMock.stub(:get, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/sup?")
             .to_return(status: 404)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError do
             http.get("/sup")
@@ -84,7 +86,7 @@ module Aws::SQS
           WebMock.stub(:head, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .to_return(status: 404, body: ERROR_BODY)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError, "NoSuchKey: The resource you requested does not exist" do
             http.head("/")
@@ -95,7 +97,7 @@ module Aws::SQS
           WebMock.stub(:head, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .to_return(status: 404)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError do
             http.head("/")
@@ -108,7 +110,7 @@ module Aws::SQS
           WebMock.stub(:put, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .to_return(status: 404, body: ERROR_BODY)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError, "NoSuchKey: The resource you requested does not exist" do
             http.put("/", "")
@@ -119,7 +121,7 @@ module Aws::SQS
           WebMock.stub(:put, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .to_return(status: 404)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError do
             http.put("/", "")
@@ -131,7 +133,7 @@ module Aws::SQS
             .with(body: "abcd", headers: {"Content-Length" => "4"})
             .to_return(status: 200)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
           http.put("/document", "abcd")
         end
 
@@ -140,7 +142,7 @@ module Aws::SQS
             .with(body: "abcd", headers: {"Content-Length" => "4", "x-amz-meta-name" => "document"})
             .to_return(status: 200)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
           http.put("/document", "abcd", {"x-amz-meta-name" => "document"})
         end
       end
@@ -150,14 +152,14 @@ module Aws::SQS
           WebMock.stub(:post, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .with(headers: {"x-amz-meta-name" => "document"})
 
-          Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION).post("/", headers: {"x-amz-meta-name" => "document"})
+          Http.new(SIGNER, endpoint: ENDPOINT).post("/", headers: {"x-amz-meta-name" => "document"})
         end
 
         it "handles aws specific errors" do
           WebMock.stub(:post, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .to_return(status: 404, body: ERROR_BODY)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError, "NoSuchKey: The resource you requested does not exist" do
             http.post("/")
@@ -168,7 +170,7 @@ module Aws::SQS
           WebMock.stub(:post, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .to_return(status: 404)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError do
             http.post("/")
@@ -181,14 +183,14 @@ module Aws::SQS
           WebMock.stub(:delete, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .with(headers: {"x-amz-mfa" => "123456"})
 
-          Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION).delete("/", headers: {"x-amz-mfa" => "123456"})
+          Http.new(SIGNER, endpoint: ENDPOINT).delete("/", headers: {"x-amz-mfa" => "123456"})
         end
 
         it "handles aws specific errors" do
           WebMock.stub(:delete, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .to_return(status: 404, body: ERROR_BODY)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError, "NoSuchKey: The resource you requested does not exist" do
             http.delete("/")
@@ -199,7 +201,7 @@ module Aws::SQS
           WebMock.stub(:delete, "http://#{SERVICE_NAME}.#{REGION}.amazonaws.com/?")
             .to_return(status: 404)
 
-          http = Http.new(SIGNER, service_name: SERVICE_NAME, region: REGION)
+          http = Http.new(SIGNER, endpoint: ENDPOINT)
 
           expect_raises Http::ServerError do
             http.delete("/")

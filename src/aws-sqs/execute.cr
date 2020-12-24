@@ -36,7 +36,7 @@ module Aws
 
       # :nodoc:
       private def http
-        Utils::Http.new(signer: @signer, service_name: SERVICE_NAME, region: @region, custom_endpoint: @endpoint)
+        Utils::Http.new(signer: @signer, endpoint: endpoint)
       end
       
       ######################################################################
