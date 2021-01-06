@@ -7,14 +7,23 @@ module Aws::SQS
       # Exception raised when Sqs gives us a non 200 http status code. The error
       # will have a specific message from Sqs.
       class ServerError < Exception
+        getter response
+
         # Creates a `ServerError` from an `HTTP::Client::Response`
-        def self.from_response(response)
-          xml = XML.new(response.body)
-
-          code = xml.string("//Error/Code")
-          message = xml.string("//Error/Message")
-
-          new("#{code}: #{message}")
+        def initialize(@response : HTTP::Client::Response)
+          if response.body.empty?
+            msg = "server error: #{response.status_code}"
+          else
+            begin
+              xml     = XML.new(response.body)
+              code    = xml.string("//Error/Code")
+              message = xml.string("//Error/Message")
+              msg     = "#{code}: #{message}"
+            rescue err
+              msg = "internal error: #{err}"
+            end
+          end
+          super(msg)
         end
       end
 
@@ -100,12 +109,7 @@ module Aws::SQS
       # :nodoc:
       private def handle_response!(response)
         return response if (200..299).includes?(response.status_code)
-
-        if !response.body.empty?
-          raise ServerError.from_response(response)
-        else
-          raise ServerError.new("server error: #{response.status_code}")
-        end
+        raise ServerError.new(response)
       end
     end
   end
